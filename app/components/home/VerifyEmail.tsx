@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import logo from "../assets/icononly.png";
+import logo from "../../assets/icononly.png";
 
 const VerifyEmail: React.FC = () => {
   const router = useRouter();
