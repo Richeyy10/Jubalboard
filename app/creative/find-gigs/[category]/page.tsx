@@ -7,6 +7,7 @@ import DashboardTopbar from "@/app/components/creative/dashboard/dashboardTopbar
 import { Search, SlidersHorizontal, ChevronDown, CheckCircle, BadgeCheck, X } from "lucide-react";
 import { findGigsServices, allGigs } from "@/app/data";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
+import Image from "next/image";
 
 const filterChips = ["All", "Recent", "$100-$200", "Graphic Designers", "Logo Design", "Posters", "Brand Identity", "Packaging"];
 
@@ -115,7 +116,7 @@ const CategoryGigsPage: React.FC = () => {
             <div className="flex gap-3.5 overflow-x-auto pb-1 scroll-smooth">
               {findGigsServices.map((service) => (
                 <div key={service.label} className="relative rounded-lg overflow-hidden h-[300px] flex-shrink-0 cursor-pointer group">
-                  <img src={service.bg} alt={service.label} className="w-[300px] h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <Image src={service.bg} alt={service.label} className="w-[300px] h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   <div className="absolute inset-0 bg-black/40" />
                   <div className="absolute bottom-0 left-0 right-0 h-[20%] flex items-center justify-center px-3 bg-[#1c1c3a]">
                     <p className="text-white font-semibold text-sm">{service.label}</p>
