@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { StaticImageData } from "next/image";
 
 // ─── Shared / Existing (Client) ───────────────────────────────────────────────
 
@@ -9,7 +10,7 @@ export interface Category {
 
 export interface Service {
   label: string;
-  bg: string;
+  bg: string | StaticImageData;
 }
 
 export interface Feature {

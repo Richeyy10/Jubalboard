@@ -8,7 +8,7 @@ const QuickActions: React.FC = () => {
       <div className="flex items-center justify-center gap-3.5 flex-shrink-0 w-[75vw] lg:w-auto lg:flex-1 bg-[#fafafa] h-[150px] lg:h-[200px] border-[1.5px] border-gray-200 rounded-[10px] px-5 py-4 cursor-pointer hover:border-gray-300 transition-colors snap-start">
         <Briefcase size={48} stroke="#E2554F" />
         <div>
-          <p className="m-0 font-bold text-2xl text-black">Explore Skills</p>
+          <p className="m-0 font-bold text-2xl text-black">Hire A Pro</p>
           <p className="m-0 mt-0.5 text-lg text-black">
             Find the exact skillset your project requires
           </p>

@@ -5,6 +5,7 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { Eye, EyeOff, Apple } from "lucide-react";
 import logo from "../../assets/icononly.png";
+import clientsignup from "../../assets/client/signup.jpg"
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -27,7 +28,7 @@ const roleConfig = {
     nextRoute: "/signin/creative",
   },
   client: {
-    image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80",
+    image: clientsignup,
     nextRoute: "/signin/client",
   },
 };

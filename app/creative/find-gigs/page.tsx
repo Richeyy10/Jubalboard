@@ -67,7 +67,7 @@ const ExploreSkills: React.FC = () => {
         <main className="flex-1 w-full px-4 lg:px-7 py-6 overflow-y-auto">
 
           <h1 className="text-[30px] font-extrabold text-[#1a1a2e] m-0 mb-6">
-            Explore Gigs by Categories
+            Find Gigs by Categories
           </h1>
 
           <ExploreSearchBar value={search} onChange={setSearch} />

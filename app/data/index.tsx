@@ -1,4 +1,13 @@
 import type { Service, Feature, Project, Pitch, Creative, FreshGig, TodoItem, OngoingGig, CreativePitch, Course, MyGig, Conversation, Transaction, EarningsData, ClientFamMember, CollabCreative, Review, CreativeProfile, NotificationGroup } from "../types";
+import img1 from "../assets/home/img1.jpg";
+import img2 from "../assets/home/img2.jpg";
+import img3 from "../assets/home/img3.jpg";
+import img4 from "../assets/home/img4.jpg";
+import img5 from "../assets/home/img5.jpg";
+import img6 from "../assets/home/img6.jpg";
+import img7 from "../assets/home/img7.jpg";
+import img8 from "../assets/home/img8.jpg";
+import img9 from "../assets/home/img9.jpg";
 
 export const categories: { iconKey: string; label: string }[] = [
   { iconKey: "image", label: "Digital &\nVisual Arts" },
@@ -20,16 +29,16 @@ export const contactItems: { iconKey: string; lines: string[] }[] = [
 ];
 
 export const trendingServices: Service[] = [
-  { label: "Logo Design", bg: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400&q=80" },
+  { label: "Logo Design", bg: img1 },
   { label: "App & Website Design", bg: "https://images.unsplash.com/photo-1555421689-3f034debb7a6?w=400&q=80" },
-  { label: "Sound Design", bg: "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=400&q=80" },
-  { label: "Music Production", bg: "https://images.unsplash.com/photo-1514320291840-2e0a9bf2a9ae?w=400&q=80" },
-  { label: "Bridal Makeup", bg: "https://images.unsplash.com/photo-1487412947147-5cebf100d4d6?w=400&q=80" },
-  { label: "Braids", bg: "https://images.unsplash.com/photo-1605980776566-0486c3ac7617?w=400&q=80" },
-  { label: "Content Creation", bg: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&q=80" },
-  { label: "Pastries", bg: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&q=80" },
-  { label: "Plumbing", bg: "https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=400&q=80" },
-  { label: "Wall Art", bg: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?w=400&q=80" },
+  { label: "Sound Design", bg: img2 },
+  { label: "Music Production", bg: img3 },
+  { label: "Bridal Makeup", bg: img4 },
+  { label: "Braids", bg: img5 },
+  { label: "Content Creation", bg: img6 },
+  { label: "Pastries", bg: img7 },
+  { label: "Plumbing", bg: img8 },
+  { label: "Wall Art", bg: img9 },
 ];
 
 export const features: Feature[] = [

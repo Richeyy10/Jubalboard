@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import logo from "../../assets/icononly.png";
+import clientsigninimg from "../../assets/client/signin.jpg";
 import { Eye, EyeOff, Apple } from "lucide-react";
 
 const GoogleIcon = () => (
@@ -27,7 +28,7 @@ const roleConfig = {
     nextRoute: "/tell-us",
   },
   client: {
-    image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80",
+    image: clientsigninimg,
     nextRoute: "/brand-profile",
   },
 };
