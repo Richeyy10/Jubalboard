@@ -8,6 +8,7 @@ import img6 from "../assets/home/img6.jpg";
 import img7 from "../assets/home/img7.jpg";
 import img8 from "../assets/home/img8.jpg";
 import img9 from "../assets/home/img9.jpg";
+import { BadgeCheck, Briefcase, ClipboardCheck, GitMerge, Network, Users } from "lucide-react";
 
 export const categories: { iconKey: string; label: string }[] = [
   { iconKey: "image", label: "Digital &\nVisual Arts" },
@@ -45,26 +46,32 @@ export const features: Feature[] = [
   {
     title: "All-in-One Creative Network",
     desc: "Find professionals across trades — digital or physical. Everything in one place",
+    icon: <Network size={40} stroke="#E2554F" strokeWidth={1.5} />,
   },
   {
     title: "Smart Matching",
     desc: "Our platform helps you connect with the right person for your project — fast.",
+    icon: <GitMerge size={40} stroke="#E2554F" strokeWidth={1.5} />,
   },
   {
     title: "Verified & Trusted",
     desc: "Our platform helps you connect with the right person for your project — fast.",
+    icon: <BadgeCheck size={40} stroke="#E2554F" strokeWidth={1.5} />,
   },
   {
-    title: "All-in-One Creative Network",
-    desc: "Find professionals across trades — digital or physical. Everything in one place",
+    title: "Post A Project & Get Offers",
+    desc: "Describe your project and receive proposals from qualified creatives ready to help.",
+    icon: <ClipboardCheck size={40} stroke="#E2554F" strokeWidth={1.5} />,
   },
   {
-    title: "Smart Matching",
-    desc: "Our platform helps you connect with the right person for your project — fast.",
+    title: "Secure Collaboration",
+    desc: "Message, share details, and manage project discussions safely within the platform.",
+    icon: <Users size={40} stroke="#E2554F" strokeWidth={1.5} />,
   },
   {
-    title: "Verified & Trusted",
-    desc: "Our platform helps you connect with the right person for your project — fast.",
+    title: "Wide Range of Creative Services",
+    desc: "From design, media to crafts, fashion, and tech - discover talents across industries.",
+    icon: <Briefcase size={40} stroke="#E2554F" strokeWidth={1.5} />,
   },
 ];
 

@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import type { StaticImageData } from "next/image";
+import { Network, GitMerge, BadgeCheck, ClipboardCheck, Users, Briefcase, LucideIcon } from "lucide-react";
+
 
 // ─── Shared / Existing (Client) ───────────────────────────────────────────────
 
@@ -16,6 +18,7 @@ export interface Service {
 export interface Feature {
   title: string;
   desc: string;
+  icon: ReactNode;
 }
 
 export interface ContactItem {

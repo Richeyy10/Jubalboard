@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import type { SkillCategory } from "../../../data/exploreSkillsData";
+import Link from "next/link";
 
 interface Props {
   category: SkillCategory;
@@ -28,8 +29,13 @@ const SkillCategoryAccordion: React.FC<Props> = ({
         className="flex items-center justify-between px-5 py-4 bg-white rounded-[20px] cursor-pointer select-none"
       >
         <div>
+          <Link
+          href={`/client/explore-skills/${encodeURIComponent(category.name)}`}
+          className="flex-1"
+        >
           <p className="m-0 font-bold text-xl text-[#1a1a2e]">{category.name}</p>
           <p className="m-0 mt-0.5 text-[14px] text-gray-500">{category.skills.length} Skills</p>
+        </Link>
         </div>
         <ChevronDown
           size={18}

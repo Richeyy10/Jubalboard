@@ -8,6 +8,7 @@ import { Search, SlidersHorizontal, ChevronDown, CheckCircle, BadgeCheck, X } fr
 import { findGigsServices, allGigs } from "@/app/data";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import Image from "next/image";
+import Link from "next/link";
 
 const filterChips = ["All", "Recent", "$100-$200", "Graphic Designers", "Logo Design", "Posters", "Brand Identity", "Packaging"];
 
@@ -64,10 +65,10 @@ const CategoryGigsPage: React.FC = () => {
 
           {/* Breadcrumb */}
           <Breadcrumb crumbs={[
-                      { label: "Dashboard", path: "/creative/dashboard" },
-                      {label: "Find Gigs", path: "/creative/find-gigs"},
-                      { label: category },
-                    ]} />
+            { label: "Dashboard", path: "/creative/dashboard" },
+            { label: "Find Gigs", path: "/creative/find-gigs" },
+            { label: category },
+          ]} />
 
           {/* Title */}
           <h1 className="text-2xl font-bold text-gray-900 mb-5">Find Gigs</h1>
@@ -97,11 +98,10 @@ const CategoryGigsPage: React.FC = () => {
               <button
                 key={chip}
                 onClick={() => setActiveChip(chip)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  activeChip === chip
-                    ? "bg-red-500 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeChip === chip
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
               >
                 {chip}
               </button>
@@ -116,7 +116,7 @@ const CategoryGigsPage: React.FC = () => {
             <div className="flex gap-3.5 overflow-x-auto pb-1 scroll-smooth">
               {findGigsServices.map((service) => (
                 <div key={service.label} className="relative rounded-lg overflow-hidden h-[300px] flex-shrink-0 cursor-pointer group">
-                  <Image src={service.bg} alt={service.label} className="w-[300px] h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <Image src={service.bg} alt={service.label} width={300} height={300} className="w-[300px] h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                   <div className="absolute inset-0 bg-black/40" />
                   <div className="absolute bottom-0 left-0 right-0 h-[20%] flex items-center justify-center px-3 bg-[#1c1c3a]">
                     <p className="text-white font-semibold text-sm">{service.label}</p>
@@ -152,9 +152,11 @@ const CategoryGigsPage: React.FC = () => {
                       <span className="text-xs font-medium text-black truncate">{gig.postedBy.name}</span>
                       {gig.postedBy.verified && <BadgeCheck fill="blue" stroke="white" size={12} className="text-blue-500 flex-shrink-0" />}
                     </div>
-                    <button className="w-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
-                      Pitch Now
-                    </button>
+                    <Link href={`/creative/find-gigs/${encodeURIComponent(gig.title)}/pitch`}>
+                      <button className="w-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
+                        Pitch Now
+                      </button>
+                    </Link>
                   </div>
                 </div>
               ))}

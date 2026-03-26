@@ -1,5 +1,6 @@
 import { Clock, MessageCircle, Eye, Upload, Users } from "lucide-react";
 import { MyGig } from "@/app/types";
+import Link from "next/link";
 
 interface Props {
   gig: MyGig;
@@ -89,9 +90,11 @@ const GigListItem: React.FC<Props> = ({ gig }) => {
             </button>
           </>
         )}
-        <button className="flex items-center justify-center gap-1.5 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-          <Upload size={12} /> Upload Deliverables
-        </button>
+        <Link href={`/creative/my-gigs/${encodeURIComponent(gig.title)}/upload-deliverables`}>
+          <button className="flex items-center justify-center gap-1.5 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+            <Upload size={12} /> Upload Deliverables
+          </button>
+        </Link>
       </div>
 
     </div>

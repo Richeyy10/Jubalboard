@@ -1,5 +1,6 @@
 import { Eye, MessageCircle } from "lucide-react";
 import { ClientFamMember } from "@/app/types";
+import Link from "next/link";
 
 interface Props {
   client: ClientFamMember;
@@ -31,10 +32,12 @@ const ClientFamRow: React.FC<Props> = ({ client, isLast }) => {
 
       {/* Actions — row on mobile, column on desktop */}
       <div className="flex flex-row lg:flex-col gap-2 flex-shrink-0">
-        <button className="flex-1 lg:flex-none flex items-center justify-center gap-1.5 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors">
-          <Eye size={12} />
-          View Profile
-        </button>
+        <Link href={`/creative/client-fam/client-profile`}>
+          <button className="flex-1 lg:flex-none flex items-center justify-center gap-1.5 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors">
+            <Eye size={12} />
+            View Profile
+          </button>
+        </Link>
         <button className="flex-1 lg:flex-none flex items-center justify-center gap-1.5 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold px-4 py-1.5 rounded-lg transition-colors">
           <MessageCircle size={12} />
           Chat Client

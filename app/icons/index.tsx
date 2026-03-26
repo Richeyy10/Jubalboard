@@ -36,6 +36,9 @@ import {
   MessageCircle,
   UserCheck,
   UserSearch,
+   GitMerge,
+  ClipboardCheck,
+  Users, 
 } from "lucide-react";
 
 // General UI
@@ -45,6 +48,9 @@ export const SearchIcon = (props: any) => <Search size={18} stroke="white" {...p
 export const BlackSearchIcon = (props: any) => <Search size={18} stroke="black" {...props} />;
 export const PlayIcon = (props: any) => <Play size={20} fill="white" stroke="white" {...props} />;
 export const NetworkIcon = (props: any) => <Network size={48} stroke="#E2554F" {...props} />;
+export const GitMergeIcon = (props: any) => <GitMerge size={48} stroke="#E2554F" {...props} />
+export const ClipboardCheckIcon = (props: any) => <ClipboardCheck size={48} stroke="#E2554F" {...props} />
+export const UsersIcon = (props: any) => <Users size={48} stroke="#E2554F" {...props} />
 
 // Category Icons
 export const ImageIcon = (props: any) => <Image size={40} stroke="#E85D3A" {...props} />;
