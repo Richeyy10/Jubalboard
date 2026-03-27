@@ -1,3 +1,6 @@
+import { useState } from "react";
+import AddFundModal from "./addFundmodal";
+
 interface Props {
   availableBalance: string;
   totalCredit: string;
@@ -8,6 +11,7 @@ interface Props {
 const WalletSummaryCards: React.FC<Props> = ({
   availableBalance, totalCredit, totalSpent, onAddFund,
 }) => {
+  const [showAddFund, setShowAddFund] = useState(false);
   return (
     <div className="flex items-stretch gap-0 border border-gray-200 rounded-[10px] bg-[#fafafa] px-2.5 py-5 overflow-hidden mb-6">
 
@@ -41,10 +45,12 @@ const WalletSummaryCards: React.FC<Props> = ({
         </p>
       </div>
 
+      {showAddFund && <AddFundModal onClose={() => setShowAddFund(false)} />}
+
       {/* Add Fund Button */}
       <div className="flex items-center justify-center px-7 py-5 bg-transparent">
         <button
-          onClick={onAddFund}
+          onClick={() => setShowAddFund(true)}
           className="bg-[#E2554F] border-none rounded-lg px-6 py-3 cursor-pointer text-white font-bold text-[14px] whitespace-nowrap hover:bg-[#d44a44] transition-colors"
         >
           + Add Fund

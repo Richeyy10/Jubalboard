@@ -192,6 +192,7 @@ export interface EarningsData {
 }
 
 export interface Transaction {
+  id: string;
   details: string;
   paymentMethod: string;
   date: string;

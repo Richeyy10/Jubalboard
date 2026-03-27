@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import { Course } from "@/app/types";
+import Link from "next/link";
 
 interface Props {
   title: string;
@@ -82,9 +83,11 @@ const CourseSection: React.FC<Props> = ({ title, courses, search, activeChip }) 
               <p className="text-xs text-gray-400 mb-3 line-clamp-2">{course.description}</p>
 
               <div className="text-center">
-                <button className="w-[60%] mx-auto bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
-                  Start Course
-                </button>
+                <Link href={`/creative/learning-hub/${course.id}`}>
+                  <button className="w-[60%] mx-auto bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
+                    Start Course
+                  </button>
+                </Link>
               </div>
             </div>
           </div>

@@ -4,6 +4,8 @@ import { Search, SlidersHorizontal, ChevronDown } from "lucide-react";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import GigsPagination from "@/app/components/creative/my-gigs/gigsPagination";
 import { allTransactions } from "@/app/data";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const statusStyles: Record<string, string> = {
   Debit: "text-red-500 bg-red-50",
@@ -13,6 +15,7 @@ const statusStyles: Record<string, string> = {
 };
 
 const TransactionsContent: React.FC = () => {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -68,18 +71,19 @@ const TransactionsContent: React.FC = () => {
             {paginated.map((tx, i) => (
               <tr
                 key={i}
+                onClick={() => router.push(`/creative/transactions/${tx.id}`)}
                 className="border-b border-gray-100 hover:bg-gray-50 transition-colors last:border-none"
               >
-                <td className="px-5 py-4 text-sm text-gray-800 max-w-[200px]">{tx.details}</td>
-                <td className="px-5 py-4 text-sm text-gray-600">{tx.paymentMethod}</td>
-                <td className="px-5 py-4 text-sm text-gray-600">{tx.date}</td>
-                <td className="px-5 py-4 text-sm text-gray-600">{tx.time}</td>
-                <td className="px-5 py-4 text-sm text-gray-700 font-medium">{tx.amount}</td>
-                <td className="px-5 py-4">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusStyles[tx.status]}`}>
-                    {tx.status}
-                  </span>
-                </td>
+                  <td className="px-5 py-4 text-sm text-gray-800 max-w-[200px]">{tx.details}</td>
+                  <td className="px-5 py-4 text-sm text-gray-600">{tx.paymentMethod}</td>
+                  <td className="px-5 py-4 text-sm text-gray-600">{tx.date}</td>
+                  <td className="px-5 py-4 text-sm text-gray-600">{tx.time}</td>
+                  <td className="px-5 py-4 text-sm text-gray-700 font-medium">{tx.amount}</td>
+                  <td className="px-5 py-4">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusStyles[tx.status]}`}>
+                      {tx.status}
+                    </span>
+                  </td>
               </tr>
             ))}
           </tbody>

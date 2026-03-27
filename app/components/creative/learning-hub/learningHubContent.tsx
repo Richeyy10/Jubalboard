@@ -11,6 +11,7 @@ import {
   jubalBoardCourses,
   advancedCourses,
 } from "@/app/data";
+import { courses } from "@/app/data";
 
 const filterChips = ["All Tutorials", "Beginners", "All Levels", "Mid-Level", "Expert", "Duration"];
 const SECTION_SIZE = 3;
@@ -79,7 +80,7 @@ const LearningHubContent: React.FC = () => {
       />
 
       {/* Active course */}
-      <ActiveCourseBanner />
+      <ActiveCourseBanner course={courses[0]} />
 
       {/* Course sections */}
       {allSections.slice(0, visibleSections).map((section) => (

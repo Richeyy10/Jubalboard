@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Clock, MessageSquare, Eye } from "lucide-react";
 import type { DeskProject, ProjectStatus } from "../../../data/myDeskData";
+import { useRouter } from "next/navigation";
 
 interface Props {
   project: DeskProject;
@@ -15,6 +16,7 @@ const statusConfig: Record<ProjectStatus, { color: string; bar: string }> = {
 
 const ProjectCard: React.FC<Props> = ({ project }) => {
   const { color, bar } = statusConfig[project.status];
+  const router = useRouter();
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-[18px] bg-[#fafafa] border border-gray-200 rounded-[10px] px-4 lg:px-5 py-4 lg:py-[18px] mb-3">
@@ -103,7 +105,7 @@ const ProjectCard: React.FC<Props> = ({ project }) => {
         <button className="flex-1 lg:flex-none flex items-center justify-center gap-1.5 lg:gap-2 bg-[#1a1a2e] border-none rounded-lg px-3 lg:px-4 py-2 lg:py-2.5 cursor-pointer text-white text-xs lg:text-[13px] font-semibold whitespace-nowrap hover:opacity-90 transition-opacity">
           <MessageSquare size={13} stroke="white" /> {project.chatLabel}
         </button>
-        <button className="flex-1 lg:flex-none flex items-center justify-center gap-1.5 lg:gap-2 bg-[#E2554F] border-none rounded-lg px-3 lg:px-4 py-2 lg:py-2.5 cursor-pointer text-white text-xs lg:text-[13px] font-semibold whitespace-nowrap hover:bg-[#d44a44] transition-colors">
+        <button onClick={() => router.push(`/client/my-desk/${project.id}`)} className="flex-1 lg:flex-none flex items-center justify-center gap-1.5 lg:gap-2 bg-[#E2554F] border-none rounded-lg px-3 lg:px-4 py-2 lg:py-2.5 cursor-pointer text-white text-xs lg:text-[13px] font-semibold whitespace-nowrap hover:bg-[#d44a44] transition-colors">
           <Eye size={13} stroke="white" /> View Project
         </button>
       </div>
