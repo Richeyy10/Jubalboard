@@ -13,7 +13,7 @@ const WalletSummaryCards: React.FC<Props> = ({
 }) => {
   const [showAddFund, setShowAddFund] = useState(false);
   return (
-    <div className="flex items-stretch gap-0 border border-gray-200 rounded-[10px] bg-[#fafafa] px-2.5 py-5 overflow-hidden mb-6">
+    <div className="grid grid-cols-2 lg:flex items-stretch gap-0 border border-gray-200 rounded-[10px] bg-[#fafafa] px-2.5 py-5 overflow-hidden mb-6">
 
       {/* Available Balance */}
       <div className="flex-1 px-6 py-5 bg-[#FFFBEB] border-r border-gray-200">
