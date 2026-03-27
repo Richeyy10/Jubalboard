@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Transaction } from "@/app/types";
+import { useRouter } from "next/navigation";
 
 interface Props {
   transactions: Transaction[];
@@ -21,6 +22,7 @@ const statusBgStyles: Record<string, string> = {
 };
 
 const RecentTransactions: React.FC<Props> = ({ transactions }) => {
+  const router = useRouter();
   return (
     <div className="bg-[#fafafa] p-4 lg:p-6">
       <div className="flex items-center justify-between mb-5">
@@ -44,7 +46,7 @@ const RecentTransactions: React.FC<Props> = ({ transactions }) => {
           </thead>
           <tbody>
             {transactions.map((tx, i) => (
-              <tr key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+              <tr onClick={() => router.push(`/creative/transactions/${tx.id}`)} key={i} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                 <td className="py-3 pr-4 text-sm text-black max-w-[180px]">{tx.details}</td>
                 <td className="py-3 pr-4 text-sm text-black">{tx.paymentMethod}</td>
                 <td className="py-3 pr-4 text-sm text-black">{tx.date}</td>
