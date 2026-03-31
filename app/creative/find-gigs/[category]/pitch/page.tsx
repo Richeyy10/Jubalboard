@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Sidebar from "@/app/components/creative/dashboard/sideBar";
 import { BadgeCheck, X } from "lucide-react";
 import DashboardTopbar from "@/app/components/creative/dashboard/dashboardTopbar";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import { useParams, useRouter } from "next/navigation";
+import { useGigStore } from "../../../../lib/stores/gigStore";
 
 const StarIcon = () => (
     <svg viewBox="0 0 20 20" fill="#F5A623" className="w-4 h-4">
@@ -26,18 +27,6 @@ const CalendarIcon = () => (
     </svg>
 );
 
-const briefRows = [
-    { label: "Job Title", value: "Logo Design" },
-    { label: "Project Category", value: "Digital & Visual Arts" },
-    { label: "Specific Skill(s)", value: "Graphics Designer" },
-    { label: "Job Description", value: "Create a modern, minimalist logo. Include brand colors (black & gold). Deliver in PNG, SVG, and PDF formats" },
-    { label: "Set your Budget", value: "$50–$100" },
-    { label: "Attach Reference File", value: "img2345.jpeg", isFile: true },
-    { label: "Timeline", value: "3 days" },
-    { label: "Delivery Date", value: "Nov 28, 2025" },
-];
-
-const deliverables = ["3 Logo Concepts", "Final Logo in PNG, PDF, SVG", "Brand Color Palette", "Font Recommendations"];
 const timelineOptions = ["Less than 24 hours", "1–2 days", "3–5 days", "1 week", "2 weeks"];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -49,32 +38,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     );
 }
 
-// ── Congratulations Modal ───────────────────────────────────────────────────
 const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
         <div className="bg-[#5ea85bff] rounded-2xl px-12 py-10 w-[80%] lg:w-[420px] flex flex-col items-center text-center shadow-2xl">
-
-            {/* Icon */}
             <div className="w-[90px] h-[90px] rounded-full bg-white flex items-center justify-center mb-5">
                 <BadgeCheck size={52} fill="white" stroke="#5ea85bff" />
             </div>
-
-            {/* Text */}
-            <h2 className="text-[22px] font-bold text-white m-0 mb-1">
-                Pitch Submitted
-            </h2>
+            <h2 className="text-[22px] font-bold text-white m-0 mb-1">Pitch Submitted</h2>
             <p className="text-[14px] text-white m-0 mb-7 leading-relaxed max-w-[260px]">
                 Fingers crossed - the client is checking it out!
             </p>
-
-            {/* Button */}
             <button
                 onClick={onGoToDashboard}
                 className="bg-white border-none rounded-lg px-8 py-2.5 cursor-pointer text-black font-semibold text-xs lg:text-[14px] hover:bg-black hover:text-white transition-colors"
             >
                 Go to My Pitches
             </button>
-
         </div>
     </div>
 );
@@ -83,73 +62,100 @@ export default function MyPitchPage() {
     const params = useParams();
     const category = decodeURIComponent(params.category as string);
     const router = useRouter();
-    const [showModal, setShowModal] = useState(false);
+    const gig = useGigStore((s) => s.selectedGig);
 
+    const [showModal, setShowModal] = useState(false);
     const [pitchPoint, setPitchPoint] = useState("");
     const [timeline, setTimeline] = useState("Less than 24 hours");
     const [milestone1, setMilestone1] = useState("Less than 24 hours");
     const [deliveryDate, setDeliveryDate] = useState("");
     const [milestone2Date, setMilestone2Date] = useState("");
-    const [pricing, setPricing] = useState("$100");
+    const [pricing, setPricing] = useState("");
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    useEffect(() => {
+        if (!gig) router.replace("/creative/find-gigs");
+    }, [gig]);
+
+    // Pre-fill pricing from gig budget
+    useEffect(() => {
+        if (gig?.budget) setPricing(gig.budget);
+    }, [gig]);
+
+    if (!gig) return null;
+
+    const briefRows = [
+        { label: "Job Title",             value: gig.title },
+        { label: "Project Category",      value: gig.category },
+        { label: "Specific Skill(s)",     value: gig.skills ?? "—" },
+        { label: "Job Description",       value: gig.description },
+        { label: "Set your Budget",       value: gig.budget },
+        { label: "Attach Reference File", value: gig.referenceFile ?? "None", isFile: !!gig.referenceFile },
+        { label: "Timeline",              value: gig.timeline },
+        { label: "Delivery Date",         value: gig.deliveryDate ?? "—" },
+    ];
+
+    const deliverables = gig.deliverables ?? [];
 
     return (
         <div className="flex flex-col min-h-screen bg-white">
 
-            {/* Congratulations Modal */}
             {showModal && (
                 <CongratulationsModal onGoToDashboard={() => router.push("/creative/my-pitches")} />
             )}
+
             <DashboardTopbar
                 userName="Natasha John"
                 userAvatar="https://i.pravatar.cc/150?img=47"
                 sidebarOpen={sidebarOpen}
                 onMenuClick={() => setSidebarOpen(!sidebarOpen)}
             />
+
             <div className="flex flex-1">
-                {/* Dark overlay — mobile only, shows when sidebar is open */}
                 {sidebarOpen && (
                     <div
                         className="fixed inset-0 bg-black/40 z-30 lg:hidden"
                         onClick={() => setSidebarOpen(false)}
                     />
                 )}
-                {/* Sidebar — slides in on mobile, always visible on desktop */}
                 <div
                     className={`
-            fixed top-0 left-0 h-full z-40
-            transition-transform duration-300 ease-in-out
-            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-            lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:z-10
-          `}
+                        fixed top-0 left-0 h-full z-40
+                        transition-transform duration-300 ease-in-out
+                        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+                        lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:z-10
+                    `}
                 >
-                    {/* Close button inside sidebar on mobile */}
                     <button
                         className="absolute top-4 right-4 z-50 lg:hidden"
                         onClick={() => setSidebarOpen(false)}
                     >
                         <X size={22} />
                     </button>
-
                     <Sidebar activeItem="Find Gigs" />
                 </div>
+
                 <main className="flex-1 w-full px-4 lg:px-7 py-6 overflow-y-auto">
-                    {/* Breadcrumb */}
                     <Breadcrumb crumbs={[
                         { label: "Dashboard", path: "/creative/dashboard" },
                         { label: "Find Gigs", path: "/creative/find-gigs" },
                         { label: category },
                     ]} />
 
-                    {/* Title */}
-                    <h1 className="text-2xl font-bold text-gray-900 mb-5">My Pitch: {category}</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-5">My Pitch: {gig.title}</h1>
 
-                    {/* Profile card */}
+                    {/* Profile card — the creative's own profile, keep as-is */}
                     <div className="bg-[#fafafa] p-6 mb-4 border border-gray-100">
                         <div className="flex items-start justify-between">
                             <div className="flex items-start gap-4">
                                 <div className="relative shrink-0">
-                                    <Image src="https://i.pravatar.cc/80?img=47" alt="Natasha John" width={64} height={64} className="rounded-full object-cover" />
+                                    <Image
+                                        src="https://i.pravatar.cc/80?img=47"
+                                        alt="Natasha John"
+                                        width={64}
+                                        height={64}
+                                        className="rounded-full object-cover"
+                                    />
                                     <span className="absolute bottom-1 right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
                                 </div>
                                 <div>
@@ -159,7 +165,9 @@ export default function MyPitchPage() {
                                     <span className="inline-block mt-1 p-2 bg-green-600 text-white text-xs font-semibold">Verified</span>
                                 </div>
                             </div>
-                            <span className="px-4 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-md">Premium</span>
+                            {gig.isPremium && (
+                                <span className="px-4 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-md">Premium</span>
+                            )}
                         </div>
                         <div className="flex items-center gap-8 mt-4 pt-4 text-sm text-gray-600">
                             <div className="flex items-center gap-1">
@@ -203,15 +211,21 @@ export default function MyPitchPage() {
                         </table>
                     </Section>
 
-                    {/* About the client */}
+                    {/* About the client — now dynamic from gig.postedBy */}
                     <Section title="About the client">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                                <Image src="https://i.pravatar.cc/80?img=12" alt="Charles Eden" width={56} height={56} className="rounded-full object-cover" />
+                                <Image
+                                    src={gig.postedBy.avatar}
+                                    alt={gig.postedBy.name}
+                                    width={56}
+                                    height={56}
+                                    className="rounded-full object-cover"
+                                />
                                 <div className="text-sm text-black">
-                                    <p className="font-semibold text-black text-base mb-1">Charles Eden</p>
-                                    <p><span className="text-black">Language: </span>English</p>
-                                    <p><span className="text-black">Preferred Communication: </span>Chat only</p>
+                                    <p className="font-semibold text-black text-base mb-1">{gig.postedBy.name}</p>
+                                    <p><span className="text-black">Language: </span>{gig.postedBy.language ?? "English"}</p>
+                                    <p><span className="text-black">Preferred Communication: </span>{gig.postedBy.communication ?? "Chat only"}</p>
                                 </div>
                             </div>
                             <button className="flex items-center gap-2 px-4 py-2 bg-[#e84545] text-white text-sm font-medium rounded-lg hover:bg-[#d03535] transition-colors">
@@ -235,31 +249,30 @@ export default function MyPitchPage() {
 
                     {/* Deliverables */}
                     <Section title="Deliverables">
-                        <div className="flex flex-wrap gap-2">
-                            {deliverables.map((d) => (
-                                <span key={d} className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-black bg-white">
-                                    {d}
-                                </span>
-                            ))}
-                        </div>
+                        {deliverables.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                                {deliverables.map((d) => (
+                                    <span key={d} className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm text-black bg-white">
+                                        {d}
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-gray-400">No deliverables specified by the client.</p>
+                        )}
                     </Section>
 
-                    {/* Pricing */}
+                    {/* Pricing — pre-filled from gig budget */}
                     <Section title="Pricing">
                         <div className="relative">
-                            <select
+                            <input
+                                type="text"
                                 value={pricing}
                                 onChange={(e) => setPricing(e.target.value)}
-                                className="w-full appearance-none px-4 py-2.5 text-sm text-black border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#e84545]/20 pr-9 cursor-pointer"
-                            >
-                                <option>$100</option>
-                                <option>$75</option>
-                                <option>$50</option>
-                                <option>Custom</option>
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-                                <ChevronDown />
-                            </div>
+                                placeholder={gig.budget}
+                                className="w-full px-4 py-2.5 text-sm text-black border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
+                            />
+                            <p className="text-xs text-gray-400 mt-1.5">Client's budget: {gig.budget}</p>
                         </div>
                     </Section>
 
@@ -280,6 +293,9 @@ export default function MyPitchPage() {
                                         <ChevronDown />
                                     </div>
                                 </div>
+                                {gig.timeline && (
+                                    <p className="text-xs text-gray-400 mt-1.5">Client expects: {gig.timeline}</p>
+                                )}
                             </div>
 
                             <div>
@@ -295,6 +311,9 @@ export default function MyPitchPage() {
                                         <CalendarIcon />
                                     </div>
                                 </div>
+                                {gig.deliveryDate && (
+                                    <p className="text-xs text-gray-400 mt-1.5">Client's deadline: {gig.deliveryDate}</p>
+                                )}
                             </div>
 
                             <div>
@@ -332,15 +351,19 @@ export default function MyPitchPage() {
 
                     {/* Actions */}
                     <div className="flex justify-end gap-3 mt-6 pb-10">
-                        <button className="flex items-center gap-2 px-6 py-2.5 bg-[#1c1c3a] text-white text-sm font-medium rounded-lg hover:bg-[#2a2a50] transition-colors">
+                        <button
+                            onClick={() => router.back()}
+                            className="flex items-center gap-2 px-6 py-2.5 bg-[#1c1c3a] text-white text-sm font-medium rounded-lg hover:bg-[#2a2a50] transition-colors"
+                        >
                             <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
                                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                             </svg>
                             Cancel
                         </button>
                         <button
-                        onClick={() => setShowModal(true)}
-                        className="px-6 py-2.5 bg-[#e84545] text-white text-sm font-medium rounded-lg hover:bg-[#d03535] transition-colors">
+                            onClick={() => setShowModal(true)}
+                            className="px-6 py-2.5 bg-[#e84545] text-white text-sm font-medium rounded-lg hover:bg-[#d03535] transition-colors"
+                        >
                             Send Now
                         </button>
                     </div>

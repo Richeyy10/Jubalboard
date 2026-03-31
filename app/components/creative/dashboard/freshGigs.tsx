@@ -1,9 +1,20 @@
+"use client";
 import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
 import { FreshGig } from "@/app/types";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useGigStore } from "../../../lib/stores/gigStore";
 
 export default function FreshGigs({ gigs }: { gigs: FreshGig[] }) {
+  const router = useRouter();
+  const setSelectedGig = useGigStore((s) => s.setSelectedGig);
+
+  const handlePitchNow = (gig: FreshGig) => {
+    setSelectedGig(gig);  // 👈 save gig to store
+    router.push(`/creative/find-gigs/${encodeURIComponent(gig.category)}/pitch`);
+  };
+
   return (
     <section className="mb-8 bg-[#fafafa] p-4 lg:p-6">
       <div className="flex items-center justify-between mb-4">
@@ -13,7 +24,6 @@ export default function FreshGigs({ gigs }: { gigs: FreshGig[] }) {
         </Link>
       </div>
 
-      {/* Horizontal scroll on mobile, grid on desktop */}
       <div className="flex gap-4 overflow-x-auto lg:overflow-x-visible lg:grid lg:grid-cols-4 pb-2 lg:pb-0 snap-x snap-mandatory scroll-smooth scrollbar-hide">
         {gigs.map((gig) => (
           <div
@@ -62,8 +72,12 @@ export default function FreshGigs({ gigs }: { gigs: FreshGig[] }) {
                 )}
               </div>
 
+              {/* 👇 replaced Link+button with a plain button */}
               <div className="text-center">
-                <button className="w-[60%] bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
+                <button
+                  onClick={() => handlePitchNow(gig)}
+                  className="w-[60%] bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                >
                   Pitch Now
                 </button>
               </div>

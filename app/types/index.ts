@@ -76,21 +76,27 @@ export interface CreativeStats {
   weeklyEarnings: number;
 }
 
-export interface FreshGig {
+export type FreshGig = {
   id: string;
   title: string;
   category: string;
   budget: string;
   timeline: string;
   description: string;
-  image: string;
+  image?: string;
   isPremium?: boolean;
+  deliveryDate?: string;
+  skills?: string;
+  referenceFile?: string;
+  deliverables?: string[];
   postedBy: {
     name: string;
     avatar: string;
     verified?: boolean;
+    language?: string;
+    communication?: string;
   };
-}
+};
 
 export interface TodoItem {
   id: string;

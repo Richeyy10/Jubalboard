@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Smile, Image, Mic, ArrowLeft } from "lucide-react";
 import { Conversation } from "@/app/types";
+import TopicChips from "./topicChips";
 
 interface Props {
   conversation: Conversation;
@@ -11,15 +12,22 @@ interface Props {
 const ChatWindow: React.FC<Props> = ({ conversation, onBack }) => {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState(conversation.messages);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null); // 👈 add this
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMessages(conversation.messages);
+    setSelectedTopic(null); // 👈 reset topic when switching conversations
   }, [conversation.id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // 👇 when a chip is clicked, pre-fill the input
+  const handleTopicSelect = (breadcrumb: string) => {
+    setInput(`Regarding ${breadcrumb} — `); // pre-fills input with context
+  };
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -76,11 +84,10 @@ const ChatWindow: React.FC<Props> = ({ conversation, onBack }) => {
               </div>
             ) : (
               <div
-                className={`max-w-[80%] lg:max-w-[65%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  msg.fromMe
+                className={`max-w-[80%] lg:max-w-[65%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.fromMe
                     ? "bg-white border border-gray-200 text-gray-800 rounded-br-sm"
                     : "bg-yellow-50 border border-yellow-100 text-gray-800 rounded-bl-sm"
-                }`}
+                  }`}
               >
                 {msg.text}
               </div>
@@ -90,6 +97,9 @@ const ChatWindow: React.FC<Props> = ({ conversation, onBack }) => {
         ))}
         <div ref={bottomRef} />
       </div>
+
+      {/* 👇 Topic Chips — shown only when no topic is selected yet */}
+      <TopicChips onSelect={handleTopicSelect} />
 
       {/* Input */}
       <div className="px-3 lg:px-4 py-3 border-t border-gray-200 bg-white flex items-center gap-2 lg:gap-3 flex-shrink-0">
