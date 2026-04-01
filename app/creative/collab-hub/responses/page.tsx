@@ -6,6 +6,7 @@ import Sidebar from "@/app/components/creative/dashboard/sideBar";
 import DashboardTopbar from "@/app/components/creative/dashboard/dashboardTopbar";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import { X, BadgeCheck } from "lucide-react";
+import Link from "next/link";
 
 interface Responder {
   id: string;
@@ -20,11 +21,11 @@ interface Responder {
 }
 
 const initialResponders: Responder[] = [
-  { id: "1", name: "Dennis Mark",  role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=12", rating: 5.0, completedProjects: 12, verified: true,  status: "pending" },
-  { id: "2", name: "Roy John",     role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=15", rating: 5.0, completedProjects: 12, verified: true,  status: "pending" },
-  { id: "3", name: "Grace Joe",    role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=32", rating: 5.0, completedProjects: 12, verified: true,  status: "pending" },
-  { id: "4", name: "David John",   role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=17", rating: 5.0, completedProjects: 12, verified: true,  status: "pending" },
-  { id: "5", name: "Mary Grace",   role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=25", rating: 5.0, completedProjects: 12, verified: true,  status: "rejected", rejectReason: "Reason: Unavailable" },
+  { id: "1", name: "Dennis Mark", role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=12", rating: 5.0, completedProjects: 12, verified: true, status: "pending" },
+  { id: "2", name: "Roy John", role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=15", rating: 5.0, completedProjects: 12, verified: true, status: "pending" },
+  { id: "3", name: "Grace Joe", role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=32", rating: 5.0, completedProjects: 12, verified: true, status: "pending" },
+  { id: "4", name: "David John", role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=17", rating: 5.0, completedProjects: 12, verified: true, status: "pending" },
+  { id: "5", name: "Mary Grace", role: "Graphic Designer", avatar: "https://i.pravatar.cc/150?img=25", rating: 5.0, completedProjects: 12, verified: true, status: "rejected", rejectReason: "Reason: Unavailable" },
 ];
 
 const StarIcon = () => (
@@ -70,7 +71,7 @@ export default function ResponsesPage() {
 
         <main className="flex-1 w-full px-4 lg:px-7 py-6 overflow-y-auto">
           <Breadcrumb crumbs={[
-            { label: "Dashboard",  path: "/creative/dashboard" },
+            { label: "Dashboard", path: "/creative/dashboard" },
             { label: "Collab Hub", path: "/creative/collab-hub" },
           ]} />
 
@@ -86,13 +87,15 @@ export default function ResponsesPage() {
                 </svg>
                 Group Chat
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-[#e84545] hover:bg-[#d03535] text-white text-sm font-semibold rounded-lg transition-colors">
-                <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                </svg>
-                View Progress
-              </button>
+              <Link href={"/creative/collab-hub/collab-progress"}>
+                <button className="flex items-center gap-2 px-4 py-2 bg-[#e84545] hover:bg-[#d03535] text-white text-sm font-semibold rounded-lg transition-colors">
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
+                  View Progress
+                </button>
+              </Link>
             </div>
           </div>
 

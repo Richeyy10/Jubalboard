@@ -1,6 +1,8 @@
 import { Clock, MessageCircle, Eye, Upload, Users } from "lucide-react";
 import { MyGig } from "@/app/types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCollabStore } from "@/app/lib/stores/collabStore";
 
 interface Props {
   gig: MyGig;
@@ -17,6 +19,14 @@ const progressColor: Record<string, string> = {
 
 const GigListItem: React.FC<Props> = ({ gig }) => {
   const isCollab = gig.status === "Collaborating";
+
+  const router = useRouter();
+  const setActiveProjectTitle = useCollabStore((s) => s.setActiveProjectTitle);
+
+  const handleUploadDeliverables = () => {
+    setActiveProjectTitle(gig.title);
+    router.push(`/creative/my-gigs/${encodeURIComponent(gig.title)}/upload-deliverables`);
+  };
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4 bg-[#fafafa] border border-gray-100 rounded-xl px-4 py-4 hover:shadow-sm transition-shadow">
@@ -90,11 +100,9 @@ const GigListItem: React.FC<Props> = ({ gig }) => {
             </button>
           </>
         )}
-        <Link href={`/creative/my-gigs/${encodeURIComponent(gig.title)}/upload-deliverables`}>
-          <button className="flex items-center justify-center gap-1.5 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
-            <Upload size={12} /> Upload Deliverables
-          </button>
-        </Link>
+        <button onClick={handleUploadDeliverables} className="flex items-center justify-center gap-1.5 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors">
+          <Upload size={12} /> Upload Deliverables
+        </button>
       </div>
 
     </div>
