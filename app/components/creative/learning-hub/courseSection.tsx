@@ -1,6 +1,9 @@
+"use client";
+
 import { Star } from "lucide-react";
 import { Course } from "@/app/types";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCourseStore } from "../../../lib/stores/courseStore";
 
 interface Props {
   title: string;
@@ -17,6 +20,9 @@ const levelColors: Record<string, string> = {
 };
 
 const CourseSection: React.FC<Props> = ({ title, courses, search, activeChip }) => {
+  const router = useRouter();
+  const setSelectedCourse = useCourseStore((s) => s.setSelectedCourse);
+
   const filtered = courses.filter((c) => {
     const matchesSearch = c.title.toLowerCase().includes(search.toLowerCase());
     const matchesChip =
@@ -28,11 +34,15 @@ const CourseSection: React.FC<Props> = ({ title, courses, search, activeChip }) 
 
   if (filtered.length === 0) return null;
 
+  const handleStartCourse = (course: Course) => {
+    setSelectedCourse(course);
+    router.push(`/creative/learning-hub/${course.id}`);
+  };
+
   return (
     <section className="mb-8">
       <h2 className="text-xl lg:text-2xl font-bold text-black mb-4">{title}</h2>
 
-      {/* Horizontal scroll on mobile, grid on desktop */}
       <div className="flex gap-4 overflow-x-auto lg:overflow-x-visible lg:grid lg:grid-cols-3 pb-2 lg:pb-0 snap-x snap-mandatory scroll-smooth scrollbar-hide">
         {filtered.map((course) => (
           <div
@@ -82,12 +92,14 @@ const CourseSection: React.FC<Props> = ({ title, courses, search, activeChip }) 
 
               <p className="text-xs text-gray-400 mb-3 line-clamp-2">{course.description}</p>
 
+              {/* 👇 replaced Link+button with handler */}
               <div className="text-center">
-                <Link href={`/creative/learning-hub/${course.id}`}>
-                  <button className="w-[60%] mx-auto bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
-                    Start Course
-                  </button>
-                </Link>
+                <button
+                  onClick={() => handleStartCourse(course)}
+                  className="w-[60%] mx-auto bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                >
+                  Start Course
+                </button>
               </div>
             </div>
           </div>

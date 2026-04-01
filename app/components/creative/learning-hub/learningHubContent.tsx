@@ -5,6 +5,7 @@ import { Search, SlidersHorizontal, ChevronDown } from "lucide-react";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import LearningStats from "./learningHubStats";
 import ActiveCourseBanner from "./activeCourseBanner";
+import { useCourseStore } from "../../../lib/stores/courseStore";
 import CourseSection from "./courseSection";
 import {
   recommendedCourses,
@@ -20,6 +21,7 @@ const LearningHubContent: React.FC = () => {
   const [activeChip, setActiveChip] = useState("All Tutorials");
   const [search, setSearch] = useState("");
   const [visibleSections, setVisibleSections] = useState(3);
+  const selectedCourse = useCourseStore((s) => s.selectedCourse);
 
   const allSections = [
     { title: "Recommended for you", courses: recommendedCourses },
@@ -80,7 +82,7 @@ const LearningHubContent: React.FC = () => {
       />
 
       {/* Active course */}
-      <ActiveCourseBanner course={courses[0]} />
+      {selectedCourse && <ActiveCourseBanner course={selectedCourse} />}
 
       {/* Course sections */}
       {allSections.slice(0, visibleSections).map((section) => (

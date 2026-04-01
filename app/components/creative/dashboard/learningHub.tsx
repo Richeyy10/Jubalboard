@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { Course } from "@/app/types";
+import { useRouter } from "next/navigation";
+import { useCourseStore } from "@/app/lib/stores/courseStore";
 
 const levelColors: Record<string, string> = {
   Beginners: "bg-gray-200 text-black",
@@ -9,6 +11,12 @@ const levelColors: Record<string, string> = {
 };
 
 export default function LearningHub({ courses }: { courses: Course[] }) {
+ const router = useRouter();
+  const setSelectedCourse = useCourseStore((s) => s.setSelectedCourse);
+  const handleStartCourse = (course: Course) => {
+      setSelectedCourse(course);
+      router.push(`/creative/learning-hub/${course.id}`);
+    };
   return (
     <section className="mb-8 bg-[#fafafa] p-4 lg:p-6">
       <div className="flex items-center justify-between mb-4">
@@ -70,8 +78,11 @@ export default function LearningHub({ courses }: { courses: Course[] }) {
 
               <p className="text-xs text-black mb-3 line-clamp-2">{course.description}</p>
 
-              <div className="text-center">
-                <button className="w-[60%] bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors">
+               <div className="text-center">
+                <button
+                  onClick={() => handleStartCourse(course)}
+                  className="w-[60%] mx-auto bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                >
                   Start Course
                 </button>
               </div>

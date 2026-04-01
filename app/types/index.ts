@@ -134,18 +134,31 @@ export interface CreativePitch {
   };
 }
 
-export interface Course {
+export type CourseLesson = {
+  title: string;
+  duration: string;
+};
+
+export type CourseOutlineSection = {
+  id: number;
+  title: string;
+  lessons: CourseLesson[];
+};
+
+export type Course = {
   id: string;
   title: string;
-  format: "Video" | "Quick Read" | "Audio";
-  level: "Beginners" | "All Levels" | "Advanced";
+  level: string;
+  format: string;
   rating: number;
-  price: number;
   duration: string;
+  price: number | string;
   description: string;
   image: string;
-}
-
+  progress?: number;
+  videoUrl?: string;
+  outline?: CourseOutlineSection[]; 
+};
 export interface MyGig {
   id: string;
   title: string;
