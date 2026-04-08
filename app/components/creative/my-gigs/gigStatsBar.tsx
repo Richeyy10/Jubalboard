@@ -24,7 +24,7 @@ const GigStatsBar: React.FC<Props> = ({ gigs }) => {
       {stats.map((s) => (
         <div key={s.label} className={`${s.bg} rounded-xl px-6 py-5`}>
           <p className={`text-4xl text-center font-bold ${s.text} mb-1`}>{s.count}</p>
-          <p className="text-sm text-black text-center font-medium">{s.label}</p>
+          <p className="text-sm text-black text-center font-body font-medium">{s.label}</p>
         </div>
       ))}
     </div>

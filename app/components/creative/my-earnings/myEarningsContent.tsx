@@ -12,7 +12,7 @@ const MyEarningsContent: React.FC = () => {
         { label: "My Earnings" },
       ]} />
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">My Earnings</h1>
+      <h1 className="text-2xl font-heading font-bold text-gray-900 mb-6">My Earnings</h1>
 
       <EarningsStats data={earningsData} />
       <EarningsBreakdown />

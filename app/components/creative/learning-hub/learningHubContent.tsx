@@ -36,7 +36,7 @@ const LearningHubContent: React.FC = () => {
         { label: "Learning Hub" },
       ]} />
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-5">Learning Hub</h1>
+      <h1 className="text-2xl font-bold font-heading text-gray-900 mb-5">Learning Hub</h1>
 
       {/* Search + Filter */}
       <div className="flex items-center gap-3 mb-4">
@@ -100,7 +100,7 @@ const LearningHubContent: React.FC = () => {
         <div className="flex justify-center mt-4 mb-8">
           <button
             onClick={() => setVisibleSections((prev) => prev + 1)}
-            className="bg-[#E2554F] hover:bg-red-600 text-white font-semibold px-12 py-3 rounded-lg transition-colors text-sm"
+            className="bg-[#E2554F] hover:bg-red-600 text-white font-semibold font-body px-12 py-3 rounded-lg transition-colors text-sm"
           >
             Load More
           </button>

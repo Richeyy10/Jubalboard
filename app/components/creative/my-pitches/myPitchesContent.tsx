@@ -32,7 +32,7 @@ const MyPitchesContent: React.FC = () => {
         { label: "My Pitches" },
       ]} />
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-5">My Pitches</h1>
+      <h1 className="text-2xl font-heading font-bold text-gray-900 mb-5">My Pitches</h1>
 
       {/* Search + Filter */}
       <div className="flex items-center gap-3 mb-4">
@@ -61,8 +61,8 @@ const MyPitchesContent: React.FC = () => {
             onClick={() => { setActiveChip(chip); setVisibleCount(PAGE_SIZE); }}
             className={`px-2 lg:px-5 py-1.5 rounded-full text-xs lg:text-sm font-medium transition-colors ${
               activeChip === chip
-                ? "bg-red-500 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "bg-red-500 font-body text-white"
+                : "bg-gray-100 font-body text-gray-600 hover:bg-gray-200"
             }`}
           >
             {chip}
@@ -85,7 +85,7 @@ const MyPitchesContent: React.FC = () => {
         <div className="flex justify-center mt-8">
           <button
             onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-            className="bg-red-500 hover:bg-red-600 text-white font-semibold px-12 py-3 rounded-lg transition-colors text-sm"
+            className="bg-red-500 hover:bg-red-600 text-white font-heading font-semibold px-12 py-3 rounded-lg transition-colors text-sm"
           >
             Load More
           </button>

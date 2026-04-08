@@ -35,7 +35,7 @@ const MyGigsContent: React.FC = () => {
         { label: "My Gigs" },
       ]} />
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-5">My Gigs</h1>
+      <h1 className="text-2xl font-heading font-bold text-gray-900 mb-5">My Gigs</h1>
 
       {/* Search + Filter */}
       <div className="flex items-center gap-3 mb-4">

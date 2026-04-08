@@ -44,41 +44,41 @@ const PitchCard: React.FC<Props> = ({ pitch }) => {
         <span className="inline-block bg-gray-100 text-black text-[10px] font-semibold px-2 py-0.5 rounded-full mb-2 w-fit">
           {pitch.category}
         </span>
-        <h4 className="font-semibold text-black text-sm mb-1">{pitch.gigTitle}</h4>
-        <p className="text-xs text-black mb-0.5">Budget: {pitch.budget}</p>
-        <p className="text-xs text-black mb-0.5">Timeline: {pitch.timeline}</p>
-        <p className="text-xs text-black mb-3 truncate">Desc: {pitch.description}</p>
+        <h4 className="font-semibold font-heading text-black text-sm mb-1">{pitch.gigTitle}</h4>
+        <p className="text-xs text-black font-body mb-0.5">Budget: {pitch.budget}</p>
+        <p className="text-xs text-black font-body mb-0.5">Timeline: {pitch.timeline}</p>
+        <p className="text-xs text-black font-body mb-3 truncate">Desc: {pitch.description}</p>
 
         {/* Client + Status */}
         <div className="flex flex-col gap-2 mb-3">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-black">Client:</span>
+            <span className="text-xs font-body text-black">Client:</span>
             <img
               src={pitch.client.avatar}
               alt={pitch.client.name}
               className="w-5 h-5 rounded-full object-cover"
             />
-            <span className="text-xs font-medium text-black truncate">{pitch.client.name}</span>
+            <span className="text-xs font-medium font-body text-black truncate">{pitch.client.name}</span>
             {pitch.client.verified && (
               <BadgeCheck size={13} fill="blue" stroke="white" className="flex-shrink-0" />
             )}
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-black">Status:</span>
-            <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${statusStyles[pitch.status]}`}>
+            <span className="text-xs font-body text-black">Status:</span>
+            <span className={`text-[10px] font-body font-semibold px-2.5 py-0.5 rounded-full capitalize ${statusStyles[pitch.status]}`}>
               {pitch.status}
             </span>
           </div>
         </div>
 
-        <p className="text-xs text-black mb-3">Sent: {pitch.sentAt}</p>
+        <p className="text-xs font-body text-black mb-3">Sent: {pitch.sentAt}</p>
 
         {/* Chat button */}
         <div className="w-full lg:w-[60%] mx-auto">
           <button
             onClick={handleChatClient}
-            className="w-full flex items-center justify-center gap-2 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2.5 rounded-lg transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-[#E2554F] hover:bg-red-600 text-white text-xs font-body font-semibold py-2.5 rounded-lg transition-colors"
           >
             <MessageCircle size={13} />
             Chat Client

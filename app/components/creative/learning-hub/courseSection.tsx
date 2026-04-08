@@ -41,7 +41,7 @@ const CourseSection: React.FC<Props> = ({ title, courses, search, activeChip }) 
 
   return (
     <section className="mb-8">
-      <h2 className="text-xl lg:text-2xl font-bold text-black mb-4">{title}</h2>
+      <h2 className="text-xl lg:text-2xl font-bold font-heading text-black mb-4">{title}</h2>
 
       <div className="flex gap-4 overflow-x-auto lg:overflow-x-visible lg:grid lg:grid-cols-3 pb-2 lg:pb-0 snap-x snap-mandatory scroll-smooth scrollbar-hide">
         {filtered.map((course) => (

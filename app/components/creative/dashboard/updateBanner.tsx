@@ -12,6 +12,7 @@ interface Banner {
   iconColor: string;
   bgColor: string;
   borderColor: string;
+  textColor: string;
 }
 
 const banners: Banner[] = [
@@ -23,6 +24,7 @@ const banners: Banner[] = [
     iconColor: "red",
     bgColor: "linear-gradient(to right, #E2554F, #3D0A0A)",
     borderColor: "#fcd9cc",
+    textColor: "white",
   },
   {
     id: 2,
@@ -32,6 +34,7 @@ const banners: Banner[] = [
     iconColor: "#3A8DE8",
     bgColor: "#E8F5FF",
     borderColor: "#cce0fd",
+    textColor: "black",
   },
   {
     id: 3,
@@ -41,6 +44,7 @@ const banners: Banner[] = [
     iconColor: "#E85D3A",
     bgColor: "#FFEAEA",
     borderColor: "#fcd9cc",
+    textColor: "black",
   },
 ];
 
@@ -77,8 +81,8 @@ const UpdateBanner: React.FC = () => {
               <div className="flex items-center gap-3.5">
                 <Icon size={29} stroke={banner.iconColor} />
                 <div>
-                  <p className="m-0 font-heading font-bold text-lg lg:text-xl text-black">{banner.title}</p>
-                  <p className="m-0 text-sm font-body lg:text-md text-black mt-0.5">{banner.message}</p>
+                  <p className="m-0 font-heading font-bold text-lg lg:text-xl" style={{ color: banner.textColor }}>{banner.title}</p>
+                  <p className="m-0 text-sm font-body lg:text-md mt-0.5" style={{ color: banner.textColor }}>{banner.message}</p>
                 </div>
               </div>
               <div onClick={() => setVisible(false)} className="cursor-pointer p-1">

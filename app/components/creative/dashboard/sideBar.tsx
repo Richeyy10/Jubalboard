@@ -47,8 +47,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem }) => {
               href={item.path}
               className={`flex items-center gap-3 px-5 py-[3px] text-md lg:text-2xl transition-all duration-150
                 ${isActive
-                  ? "text-[#E2554F] font-semibold"
-                  : "text-gray-700 font-normal hover:text-[#e2554f]"
+                  ? "text-[#E2554F] font-heading font-semibold"
+                  : "text-gray-700 font-heading font-normal hover:text-[#e2554f]"
                 }`}
             >
               <item.icon size={20} />
@@ -67,8 +67,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem }) => {
               href={item.path}
               className={`flex items-center gap-3 px-5 py-[3px] text-md lg:text-2xl transition-all duration-150
                 ${isActive
-                  ? "text-[#e2554f] font-semibold"
-                  : "text-gray-700 font-normal hover:text-[#e2554f]"
+                  ? "text-[#e2554f] font-heading font-semibold"
+                  : "text-gray-700 font-heading font-normal hover:text-[#e2554f]"
                 }`}
             >
               <item.icon size={20} />

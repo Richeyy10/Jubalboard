@@ -24,7 +24,7 @@ const EarningsBreakdown: React.FC = () => {
   return (
     <div className="bg-[#fafafa] p-6 mb-6">
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg lg:text-2xl font-bold text-gray-900">Earnings Breakdown</h2>
+        <h2 className="text-lg lg:text-2xl font-heading font-bold text-gray-900">Earnings Breakdown</h2>
 
         {/* Period dropdown */}
         <div className="relative">
@@ -57,12 +57,12 @@ const EarningsBreakdown: React.FC = () => {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Platform Fees */}
         <div>
-          <p className="font-semibold text-black text-sm lg:text-xl mb-4">Platform Fees</p>
+          <p className="font-semibold font-heading text-black text-sm lg:text-xl mb-4">Platform Fees</p>
           <div className="space-y-3">
             {platformFees.map((fee) => (
               <div key={fee.label} className="flex items-center justify-between">
-                <span className="text-sm lg:text-lg text-black">{fee.label}</span>
-                <span className="text-sm lg:text-md text-black font-medium">{fee.amount}</span>
+                <span className="text-sm font-body lg:text-lg text-black">{fee.label}</span>
+                <span className="text-sm font-body lg:text-md text-black font-medium">{fee.amount}</span>
               </div>
             ))}
           </div>
@@ -70,20 +70,20 @@ const EarningsBreakdown: React.FC = () => {
 
         {/* Withheld Amounts */}
         <div>
-          <p className="font-semibold text-black text-sm lg:text-xl mb-4">Withheld Amounts</p>
+          <p className="font-semibold font-heading text-black text-sm lg:text-xl mb-4">Withheld Amounts</p>
           <div className="space-y-3">
             {withheldAmounts.map((item) => (
               <div key={item.label} className="flex items-center justify-between">
-                <span className="text-sm lg:text-lg text-black">{item.label}</span>
-                <span className="text-sm lg:text-md text-black font-medium">{item.amount}</span>
+                <span className="text-sm font-body lg:text-lg text-black">{item.label}</span>
+                <span className="text-sm font-body lg:text-md text-black font-medium">{item.amount}</span>
               </div>
             ))}
           </div>
 
           {/* Net Earnings */}
           <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
-            <span className="font-bold text-black text-sm lg:text-md">Net Earnings</span>
-            <span className="font-bold text-black text-sm lg:text-md">$420.00</span>
+            <span className="font-bold font-body text-black text-sm lg:text-md">Net Earnings</span>
+            <span className="font-bold font-body text-black text-sm lg:text-md">$420.00</span>
           </div>
         </div>
       </div>

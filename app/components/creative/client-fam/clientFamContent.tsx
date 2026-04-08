@@ -27,7 +27,7 @@ const ClientFamContent: React.FC = () => {
         { label: "Client Fam" },
       ]} />
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-5">Client Fam</h1>
+      <h1 className="text-2xl font-bold font-heading text-gray-900 mb-5">Client Fam</h1>
 
       {/* Search */}
       <div className="relative mb-6 max-w-full">

@@ -72,7 +72,7 @@ export default function ConversationPage() {
           <div className="hidden lg:flex w-72 xl:w-80 border-r border-gray-200 flex-col flex-shrink-0 overflow-hidden">
             {/* 👇 this header was missing/hidden */}
             <div className="px-4 py-4 border-b border-gray-100 flex-shrink-0">
-              <h2 className="text-lg font-bold text-gray-900">Messages</h2>
+              <h2 className="text-lg font-heading font-bold text-gray-900">Messages</h2>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0">
               <ConversationList />

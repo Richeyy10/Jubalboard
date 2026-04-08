@@ -55,7 +55,7 @@ const MessagesPage: React.FC = () => {
           {/* Conversation list */}
           <div className="w-full lg:w-72 xl:w-80 border-r border-gray-200 flex flex-col overflow-hidden">
             <div className="px-4 py-4 border-b border-gray-100 flex-shrink-0">
-              <h2 className="text-lg font-bold text-gray-900">Messages</h2>
+              <h2 className="text-lg font-heading font-bold text-gray-900">Messages</h2>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0">
               <ConversationList />
@@ -65,12 +65,12 @@ const MessagesPage: React.FC = () => {
           {/* Empty state — desktop only */}
           <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-center gap-3">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
-              <MessageCircle size={28} className="text-gray-400" />
+              <MessageCircle size={28} className="text-black" />
             </div>
-            <p className="text-sm font-semibold text-gray-700">
+            <p className="text-sm font-semibold text-black">
               Select a conversation
             </p>
-            <p className="text-xs text-gray-400 max-w-[200px]">
+            <p className="text-xs text-black max-w-[200px]">
               Choose from your existing conversations or start a new one by clicking Chat Client on any gig.
             </p>
           </div>

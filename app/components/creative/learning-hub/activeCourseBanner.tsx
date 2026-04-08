@@ -20,8 +20,8 @@ const ActiveCourseBanner: React.FC<Props> = ({ course }) => {
   return (
     <div className="border border-gray-200 rounded-xl p-6 mb-8">
       <div className="flex flex-col items-center text-center">
-        <h3 className="font-bold text-gray-900 text-base mb-2">{course.title}</h3>
-        <span className="bg-yellow-100 text-yellow-700 text-xs font-semibold px-3 py-1 rounded-full mb-4">
+        <h3 className="font-bold font-heading text-gray-900 text-base mb-2">{course.title}</h3>
+        <span className="bg-yellow-100 text-yellow-700 text-xs font-body font-semibold px-3 py-1 rounded-full mb-4">
           In Progress
         </span>
         <div className="w-full max-w-md mb-1">
@@ -32,7 +32,7 @@ const ActiveCourseBanner: React.FC<Props> = ({ course }) => {
         <p className="text-xs text-gray-500 mb-4">{course.progress ?? 60}%</p>
         <button
           onClick={handleResume}
-          className="bg-[#E2554F] hover:bg-red-600 text-white font-semibold px-10 py-2.5 rounded-lg transition-colors text-sm"
+          className="bg-[#E2554F] hover:bg-red-600 text-white font-body font-semibold px-10 py-2.5 rounded-lg transition-colors text-sm"
         >
           Resume
         </button>
