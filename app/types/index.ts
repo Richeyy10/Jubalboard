@@ -200,7 +200,7 @@ export type Conversation = {
   lastMessage?: string;
   lastSender?: string;
   lastTime?: string;
-  unread?: number;
+  unread: number;
   messages: Message[];
 };
 
