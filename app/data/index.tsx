@@ -324,6 +324,7 @@ export const creativePitches: CreativePitch[] = [
     sentAt: "18th Nov, 2025, 10:00am",
     status: "approved",
     client: {
+      id: "1712581200034",
       name: "Charles John",
       avatar: "https://i.pravatar.cc/150?img=33",
       verified: true,
@@ -340,6 +341,7 @@ export const creativePitches: CreativePitch[] = [
     sentAt: "18th Nov, 2025, 10:00am",
     status: "pending",
     client: {
+      id: "1712581200047",
       name: "Davies Mark",
       avatar: "https://i.pravatar.cc/150?img=12",
       verified: true,
@@ -356,6 +358,7 @@ export const creativePitches: CreativePitch[] = [
     sentAt: "18th Nov, 2025, 10:00am",
     status: "approved",
     client: {
+      id: "1712581200034",
       name: "Charles John",
       avatar: "https://i.pravatar.cc/150?img=33",
       verified: true,
@@ -372,6 +375,7 @@ export const creativePitches: CreativePitch[] = [
     sentAt: "18th Nov, 2025, 10:00am",
     status: "approved",
     client: {
+      id: "1712581200034",
       name: "Charles John",
       avatar: "https://i.pravatar.cc/150?img=33",
       verified: true,
