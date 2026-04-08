@@ -6,26 +6,28 @@ import {
   DollarSign, ArrowLeftRight, Users, GitMerge, Star,
   BookOpen, User, Bell, Settings, LogOut,
 } from "lucide-react";
+import { Client, Collab, Dashboard, Earnings, Feedback, Find, Gigs, Learning, Logs, Messages, Notifs, Pitches, Profile, Settingss, Support, Transactions } from "@/app/icons";
 
 const navItems = [
-  { label: "Dashboard", path: "/creative/dashboard", icon: LayoutDashboard },
-  { label: "Find Gigs", path: "/creative/find-gigs", icon: Search },
-  { label: "My Gigs", path: "/creative/my-gigs", icon: Briefcase },
-  { label: "My Pitches", path: "/creative/my-pitches", icon: Send },
-  { label: "Messages", path: "/creative/messages", icon: MessageSquare },
-  { label: "My Earnings", path: "/creative/my-earnings", icon: DollarSign },
-  { label: "Transactions", path: "/creative/transactions", icon: ArrowLeftRight },
-  { label: "Client Fam", path: "/creative/client-fam", icon: Users },
-  { label: "Collab Hub", path: "/creative/collab-hub", icon: GitMerge },
-  { label: "Feedbacks", path: "/creative/feedbacks", icon: Star },
-  { label: "Learning Hub", path: "/creative/learning-hub", icon: BookOpen },
-  { label: "My Profile", path: "/creative/my-profile", icon: User },
+  { label: "Dashboard", path: "/creative/dashboard", icon: Dashboard },
+  { label: "Find Gigs", path: "/creative/find-gigs", icon: Find },
+  { label: "My Gigs", path: "/creative/my-gigs", icon: Gigs },
+  { label: "My Pitches", path: "/creative/my-pitches", icon: Pitches },
+  { label: "Messages", path: "/creative/messages", icon: Messages },
+  { label: "My Earnings", path: "/creative/my-earnings", icon: Earnings },
+  { label: "Transactions", path: "/creative/transactions", icon: Transactions },
+  { label: "Client Fam", path: "/creative/client-fam", icon: Client },
+  { label: "Collab Hub", path: "/creative/collab-hub", icon: Collab },
+  { label: "Feedbacks", path: "/creative/feedbacks", icon: Feedback },
+  { label: "Learning Hub", path: "/creative/learning-hub", icon: Learning },
+  { label: "My Profile", path: "/creative/my-profile", icon: Profile },
 ];
 
 const bottomItems = [
-  { label: "Notifications", path: "/creative/notifications", icon: Bell },
-  { label: "Settings", path: "/creative/settings", icon: Settings },
-  { label: "Log out", path: "/onboarding", icon: LogOut },
+  { label: "Notifications", path: "/creative/notifications", icon: Notifs },
+  { label: "Support", path: "/creative/support", icon: Support },
+  { label: "Settings", path: "/creative/settings", icon: Settingss },
+  { label: "Log out", path: "/onboarding", icon: Logs },
 ];
 
 interface SidebarProps {
@@ -38,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem }) => {
     <div className="w-[200px] lg:w-[300px] h-full h-screen bg-[#fafafa] border-r border-[#f0f0f0] pt-8 lg:pt-5 flex flex-col overflow-y-auto justify-center lg:justify-start lg:pt-10 lg:pl-10">
       <div>
         {navItems.map((item) => {
-          const isActive = pathname === item.path;
+          const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
           return (
             <Link
               key={item.label}
@@ -58,7 +60,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem }) => {
 
       <div>
         {bottomItems.map((item) => {
-          const isActive = pathname === item.path;
+          const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
           return (
             <Link
               key={item.label}
