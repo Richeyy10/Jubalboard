@@ -6,7 +6,9 @@ import { useMessageStore } from "../../../lib/stores/messageStore";
 import { useOpenChat } from "../../../lib/hooks/useOpenChat";
 import { Conversation } from "@/app/types";
 
-const ConversationList: React.FC = () => {
+type Props = {};
+
+const ConversationList = () => {
   const [search, setSearch] = useState("");
   const conversations = useMessageStore((s) => s.conversations);
   const activeConversationId = useMessageStore((s) => s.activeConversationId);
