@@ -25,9 +25,6 @@ const MessagesContent: React.FC<Props> = ({ showChat, onSelectConversation, onBa
       {/* Conversation list — full screen on mobile when no chat open */}
       <div className={`${showChat ? "hidden" : "flex"} lg:flex w-full lg:w-[280px] flex-shrink-0 flex-col border-r border-gray-200`}>
         <ConversationList
-          conversations={conversations}
-          activeId={activeId}
-          onSelect={handleSelect}
         />
       </div>
 
