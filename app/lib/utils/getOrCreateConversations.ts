@@ -14,6 +14,7 @@ export const makeDMConversation = (user: {
   messages: [],
   lastMessage: "",
   lastTime: "",
+  unread: 0,
 });
 
 export const makeGroupConversation = (project: {
@@ -28,4 +29,5 @@ export const makeGroupConversation = (project: {
   messages: [],
   lastMessage: "",
   lastTime: "",
+  unread: 0,
 });
