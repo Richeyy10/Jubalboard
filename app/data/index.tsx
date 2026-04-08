@@ -689,7 +689,8 @@ export const myGigs: MyGig[] = [
 
 export const conversations: Conversation[] = [
   {
-    id: "1",
+    id: "dm_1712581200000_k3j9xqp",
+    type: "dm",
     name: "Charles Eden",
     avatar: "https://i.pravatar.cc/150?img=11",
     lastMessage: "Hi, How are you?",
@@ -708,7 +709,8 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: "2",
+    id: "group_1712581200001_m8w2yzr",
+    type: "group",
     name: "Creative Campaign Group",
     avatar: "https://i.pravatar.cc/150?img=32",
     lastMessage: "Hi, How are you?",
@@ -722,7 +724,8 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: "3",
+    id: "dm_1712581200002_p9x4tnm",
+    type: "dm",
     name: "Natasha Eden",
     avatar: "https://i.pravatar.cc/150?img=47",
     lastMessage: "Hi, How are you?",
@@ -735,7 +738,8 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: "4",
+    id: "dm_1712581200002_p9x4tnm",
+    type: "dm",
     name: "Natasha Eden",
     avatar: "https://i.pravatar.cc/150?img=20",
     lastMessage: "Hi, How are you?",
@@ -747,7 +751,8 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: "5",
+    id: "dm_1712581200002_p9x4tnm",
+    type: "dm",
     name: "Natasha Eden",
     avatar: "https://i.pravatar.cc/150?img=15",
     lastMessage: "Hi, How are you?",
@@ -759,7 +764,8 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: "6",
+    id: "dm_1712581200002_p9x4tnm",
+    type: "dm",
     name: "Natasha Eden",
     avatar: "https://i.pravatar.cc/150?img=25",
     lastMessage: "Hi, How are you?",
@@ -771,7 +777,8 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: "7",
+    id: "dm_1712581200002_p9x4tnm",
+    type: "dm",
     name: "Natasha Eden",
     avatar: "https://i.pravatar.cc/150?img=44",
     lastMessage: "Hi, How are you?",
@@ -783,7 +790,8 @@ export const conversations: Conversation[] = [
     ],
   },
   {
-    id: "8",
+    id: "dm_1712581200002_p9x4tnm",
+    type: "dm",
     name: "Natasha Eden",
     avatar: "https://i.pravatar.cc/150?img=38",
     lastMessage: "Hi, How are you?",

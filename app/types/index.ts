@@ -128,9 +128,11 @@ export interface CreativePitch {
   sentAt: string;
   status: "approved" | "pending" | "rejected";
   client: {
+    id: string; 
     name: string;
     avatar: string;
     verified?: boolean;
+    isOnline?: boolean;
   };
 }
 
@@ -169,7 +171,7 @@ export interface MyGig {
   };
   dueIn: string;
   progress: number;
-  status: "In Progress" | "Completed" | "Revised" | "Collaborating" | "Partially Completed" | "Active";
+  status: "All" | "In Progress" | "Completed" | "Revised" | "Collaborating" | "Partially Completed" | "Active";
   collabMates?: {
     avatars: string[];
     label: string;
@@ -184,25 +186,34 @@ export interface ChatMessage {
   isQuickReply?: boolean;
 }
 
-export interface Message {
+// app/types.ts
+export type ConversationType = "dm" | "group";
+
+export type Conversation = {
+  id: string;
+  type: ConversationType;
+  name: string;           // person's name or group name
+  avatar?: string;        // for DMs
+  members?: { name: string; avatar: string }[];    // for group chats (multiple avatars)
+  isOnline?: boolean;
+  isGroup?: boolean;  
+  lastMessage?: string;
+  lastSender?: string;
+  lastTime?: string;
+  unread?: number;
+  messages: Message[];
+};
+
+export type Message = {
   id: string;
   text: string;
   fromMe: boolean;
   time: string;
   isQuickReply?: boolean;
-}
-
-export interface Conversation {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  lastTime: string;       // add this
-  unread: number;
-  isOnline: boolean;
-  isGroup?: boolean;
-  messages: Message[];    // add this
-}
+  senderId?: string;
+  senderName?: string;    // needed for group chats
+  senderAvatar?: string;  // needed for group chats
+};
 
 export interface EarningsData {
   totalEarned: number;

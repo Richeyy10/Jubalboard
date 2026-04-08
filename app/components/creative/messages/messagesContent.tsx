@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import ConversationList from "./conversationList";
-import ChatWindow from "./ chatWindow";
+import ChatWindow from "./chatWindow";
 import { conversations } from "@/app/data";
 
 interface Props {

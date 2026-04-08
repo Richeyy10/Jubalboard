@@ -1,25 +1,29 @@
 "use client";
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, MessageCircle } from "lucide-react";
 import Sidebar from "@/app/components/creative/dashboard/sideBar";
 import DashboardTopbar from "@/app/components/creative/dashboard/dashboardTopbar";
-import MessagesContent from "@/app/components/creative/messages/messagesContent";
+import ConversationList from "@/app/components/creative/messages/conversationList";
 
 const MessagesPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showChat, setShowChat] = useState(false);
 
   return (
-    <div className="flex flex-col overflow-hidden bg-white">
-      <DashboardTopbar
-        userName="Natasha John"
-        userAvatar="https://i.pravatar.cc/150?img=47"
-        sidebarOpen={sidebarOpen}
-        onMenuClick={() => setSidebarOpen(!sidebarOpen)}
-      />
+    <div className="flex flex-col h-screen overflow-hidden bg-white">
 
-      <div className="flex flex-1 overflow-hidden relative">
-        {/* Dark overlay — mobile only */}
+      {/* Topbar */}
+      <div className="flex-shrink-0">
+        <DashboardTopbar
+          userName="Natasha John"
+          userAvatar="https://i.pravatar.cc/150?img=47"
+          sidebarOpen={sidebarOpen}
+          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+        />
+      </div>
+
+      <div className="flex flex-1 overflow-hidden min-h-0 relative">
+
+        {/* Mobile overlay */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/40 z-30 lg:hidden"
@@ -30,10 +34,10 @@ const MessagesPage: React.FC = () => {
         {/* Sidebar */}
         <div
           className={`
-            fixed top-0 left-0 h-full z-40
+            absolute top-0 left-0 h-full z-40
             transition-transform duration-300 ease-in-out
             ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-            lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:z-10
+            lg:relative lg:translate-x-0 lg:h-full lg:z-10
           `}
         >
           <button
@@ -45,15 +49,33 @@ const MessagesPage: React.FC = () => {
           <Sidebar activeItem="Messages" />
         </div>
 
-        {/* Main */}
-        <main className="flex-1 w-full h-screen overflow-hidden p-6 flex flex-col">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">My Messages</h1>
-          <MessagesContent
-            showChat={showChat}
-            onSelectConversation={() => setShowChat(true)}
-            onBack={() => setShowChat(false)}
-          />
-        </main>
+        {/* Messages layout */}
+        <div className="flex flex-1 overflow-hidden min-h-0">
+
+          {/* Conversation list */}
+          <div className="w-full lg:w-72 xl:w-80 border-r border-gray-200 flex flex-col overflow-hidden">
+            <div className="px-4 py-4 border-b border-gray-100 flex-shrink-0">
+              <h2 className="text-lg font-bold text-gray-900">Messages</h2>
+            </div>
+            <div className="flex-1 overflow-y-auto min-h-0">
+              <ConversationList />
+            </div>
+          </div>
+
+          {/* Empty state — desktop only */}
+          <div className="hidden lg:flex flex-1 flex-col items-center justify-center text-center gap-3">
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+              <MessageCircle size={28} className="text-gray-400" />
+            </div>
+            <p className="text-sm font-semibold text-gray-700">
+              Select a conversation
+            </p>
+            <p className="text-xs text-gray-400 max-w-[200px]">
+              Choose from your existing conversations or start a new one by clicking Chat Client on any gig.
+            </p>
+          </div>
+
+        </div>
       </div>
     </div>
   );

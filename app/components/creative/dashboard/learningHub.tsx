@@ -20,7 +20,7 @@ export default function LearningHub({ courses }: { courses: Course[] }) {
   return (
     <section className="mb-8 bg-[#fafafa] p-4 lg:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl lg:text-3xl font-bold text-gray-900">Learning Hub</h3>
+        <h3 className="text-xl lg:text-3xl font-heading font-bold text-gray-900">Learning Hub</h3>
         <Link href="/creative/learning-hub" className="text-sm text-[#E2554F] font-medium hover:text-red-600">
           View All
         </Link>
@@ -55,33 +55,33 @@ export default function LearningHub({ courses }: { courses: Course[] }) {
 
             {/* Content */}
             <div className="p-3">
-              <h4 className="font-semibold text-black text-sm text-center mb-2">{course.title}</h4>
+              <h4 className="font-heading font-semibold text-black text-sm text-center mb-2">{course.title}</h4>
 
               <div className="flex justify-center mb-2">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${levelColors[course.level]}`}>
+                <span className={`text-[10px] font-body font-semibold px-2 py-0.5 rounded-full ${levelColors[course.level]}`}>
                   {course.level}
                 </span>
               </div>
 
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-black">Format: {course.format}</span>
+                <span className="text-xs font-body text-black">Format: {course.format}</span>
                 <div className="flex items-center gap-0.5">
                   <Star size={11} className="text-yellow-400 fill-yellow-400" />
-                  <span className="text-xs font-medium text-black">{course.rating}</span>
+                  <span className="text-xs font-body font-medium text-black">{course.rating}</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs text-black">Duration: {course.duration}</span>
-                <span className="text-xs font-medium text-green-600">${course.price}</span>
+                <span className="text-xs font-body text-black">Duration: {course.duration}</span>
+                <span className="text-xs font-body font-medium text-green-600">${course.price}</span>
               </div>
 
-              <p className="text-xs text-black mb-3 line-clamp-2">{course.description}</p>
+              <p className="text-xs font-body text-black mb-3 line-clamp-2">{course.description}</p>
 
                <div className="text-center">
                 <button
                   onClick={() => handleStartCourse(course)}
-                  className="w-[60%] mx-auto bg-[#E2554F] hover:bg-red-600 text-white text-xs font-semibold py-2 rounded-lg transition-colors"
+                  className="w-[60%] mx-auto bg-[#E2554F] hover:bg-red-600 text-white text-xs font-body font-semibold py-2 rounded-lg transition-colors"
                 >
                   Start Course
                 </button>

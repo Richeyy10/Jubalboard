@@ -3,7 +3,7 @@ import { TodoItem } from "@/app/types";
 export default function TodoList({ todos }: { todos: TodoItem[] }) {
   return (
     <section className="mb-8 bg-[#fafafa] p-4 lg:p-6">
-      <h3 className="text-xl lg:text-3xl font-bold text-gray-900 mb-4">Your To-Do</h3>
+      <h3 className="text-xl lg:text-3xl font-heading font-bold text-gray-900 mb-4">Your To-Do</h3>
 
       {/* Horizontal scroll on mobile, 2-col grid on desktop */}
       <div className="flex gap-4 overflow-x-auto lg:overflow-x-visible lg:grid lg:grid-cols-2 pb-2 lg:pb-0 snap-x snap-mandatory scroll-smooth scrollbar-hide">

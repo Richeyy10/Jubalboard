@@ -13,7 +13,7 @@ export default function YourPitches({ pitches }: { pitches: CreativePitch[] }) {
   return (
     <section className="mb-8 bg-[#fafafa] p-4 lg:p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl lg:text-3xl font-bold text-gray-900">Your Pitches</h3>
+        <h3 className="text-xl lg:text-3xl font-heading font-bold text-gray-900">Your Pitches</h3>
         <Link href="/creative/my-pitches" className="text-sm text-[#E2554F] font-medium hover:text-red-600">
           View All
         </Link>
