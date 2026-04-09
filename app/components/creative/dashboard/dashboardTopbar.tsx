@@ -11,7 +11,7 @@ interface Props {
 
 const DashboardTopbar: React.FC<Props> = ({ userName, userAvatar, sidebarOpen, onMenuClick }) => {
   return (
-    <div className="flex items-center justify-between px-4 lg:px-7 h-[70px] lg:h-[90px] bg-white border-b border-[#f0f0f0] sticky top-0 z-[100]">
+    <div className="flex items-center justify-between px-4 lg:px-7 h-[120px] lg:h-[90px] bg-white border-b border-[#f0f0f0] sticky top-0 z-[100]">
 
       {/* Left — Hamburger/X toggle (mobile only) + Logo */}
       <div className="flex items-center">
@@ -21,9 +21,9 @@ const DashboardTopbar: React.FC<Props> = ({ userName, userAvatar, sidebarOpen, o
           alt="Jubal Board logo"
           width={120}
           height={120}
-          className="object-contain w-[120px] lg:w-[100px]"
+          className="object-contain w-[80px] lg:w-[100px]"
         />
-        <h1 className="font-heading font-bold text-black text-2xl">JUBALBOARD</h1>
+        <h1 className="hidden lg:block font-heading font-bold text-black text-2xl">JUBALBOARD</h1>
       </div>
 
       {/* Right — Icons + Avatar */}

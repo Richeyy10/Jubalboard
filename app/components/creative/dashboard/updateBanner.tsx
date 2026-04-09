@@ -66,7 +66,7 @@ const UpdateBanner: React.FC = () => {
   return (
     <div ref={containerRef} className="relative w-full mb-5">
       {/* All three banners side by side */}
-      <div className="flex gap-3">
+      <div className="lg:flex gap-3">
         {banners.map((banner) => {
           const Icon = banner.icon;
           return (
