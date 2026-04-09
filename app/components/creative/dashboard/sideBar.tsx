@@ -45,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem }) => {
             <Link
               key={item.label}
               href={item.path}
-              className={`flex items-center gap-3 px-5 py-[3px] text-md lg:text-2xl transition-all duration-150
+              className={`flex items-center gap-3 px-5 py-[3px] text-md lg:text-xl transition-all duration-150
                 ${isActive
                   ? "text-[#E2554F] font-heading font-semibold"
                   : "text-gray-700 font-heading font-normal hover:text-[#e2554f]"
@@ -65,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeItem }) => {
             <Link
               key={item.label}
               href={item.path}
-              className={`flex items-center gap-3 px-5 py-[3px] text-md lg:text-2xl transition-all duration-150
+              className={`flex items-center gap-3 px-5 py-[3px] text-md lg:text-xl transition-all duration-150
                 ${isActive
                   ? "text-[#e2554f] font-heading font-semibold"
                   : "text-gray-700 font-heading font-normal hover:text-[#e2554f]"

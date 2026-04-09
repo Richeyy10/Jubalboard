@@ -21,7 +21,7 @@ const ProjectRow: React.FC<{ project: Project }> = ({ project }) => (
 
     {/* Info */}
     <div className="flex-1 min-w-0">
-      <p className="m-0 text-xl font-semibold text-[#1a1a2e]">{project.title}</p>
+      <p className="m-0 text-xl font-heading font-semibold text-[#1a1a2e]">{project.title}</p>
 
       {/* Assignee */}
       <div className="flex items-center gap-1.5 my-1">
@@ -32,7 +32,7 @@ const ProjectRow: React.FC<{ project: Project }> = ({ project }) => (
           height={30}
           className="rounded-full object-cover"
         />
-        <span className="text-base text-gray-500">{project.assignee}</span>
+        <span className="text-sm text-black">{project.assignee}</span>
       </div>
 
       <span className="text-[15px] text-[#E2554F] font-medium">{project.status}</span>
@@ -45,7 +45,7 @@ const ProjectRow: React.FC<{ project: Project }> = ({ project }) => (
             style={{ width: `${project.progress}%` }}
           />
         </div>
-        <span className="text-[14px] text-gray-500 whitespace-nowrap">
+        <span className="text-[14px] text-black whitespace-nowrap">
           {project.progress}%
         </span>
       </div>
@@ -63,7 +63,7 @@ const ActiveProjects: React.FC<Props> = ({ projects }) => {
   return (
     <div className="flex-1 bg-[#fafafa] p-5">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-[26px] font-extrabold text-[#1a1a2e] m-0">
+        <h3 className="text-[26px] font-extrabold font-heading text-black m-0">
           Active Projects
         </h3>
         <button className="bg-transparent border-none text-[#e2554f] font-semibold text-[13px] cursor-pointer hover:underline">

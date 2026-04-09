@@ -18,7 +18,7 @@ const MyProfileContent: React.FC = () => {
         { label: creativeProfile.name },
       ]} />
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-5">Creative Profile</h1>
+      <h1 className="text-2xl font-heading font-bold text-gray-900 mb-5">Creative Profile</h1>
 
       <div className="flex flex-col gap-4">
         <ProfileHeader profile={creativeProfile} />

@@ -69,28 +69,28 @@ const CourseSection: React.FC<Props> = ({ title, courses, search, activeChip }) 
 
             {/* Content */}
             <div className="p-3">
-              <h4 className="font-semibold text-gray-900 text-sm text-center mb-2">{course.title}</h4>
+              <h4 className="font-semibold font-heading text-black text-sm text-center mb-2">{course.title}</h4>
 
               <div className="flex justify-center mb-2">
-                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${levelColors[course.level] ?? "bg-gray-100 text-gray-700"}`}>
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${levelColors[course.level] ?? "bg-gray-100 text-black"}`}>
                   {course.level}
                 </span>
               </div>
 
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-gray-500">Format: {course.format}</span>
+                <span className="text-xs text-black">Format: {course.format}</span>
                 <div className="flex items-center gap-0.5">
                   <Star size={11} className="text-yellow-400 fill-yellow-400" />
-                  <span className="text-xs font-medium text-gray-700">{course.rating}</span>
+                  <span className="text-xs font-medium text-black">{course.rating}</span>
                 </div>
               </div>
 
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-500">Duration: {course.duration}</span>
+                <span className="text-xs text-black">Duration: {course.duration}</span>
                 <span className="text-xs font-medium text-green-600">${course.price}</span>
               </div>
 
-              <p className="text-xs text-gray-400 mb-3 line-clamp-2">{course.description}</p>
+              <p className="text-xs text-black font-body mb-3 line-clamp-2">{course.description}</p>
 
               {/* 👇 replaced Link+button with handler */}
               <div className="text-center">

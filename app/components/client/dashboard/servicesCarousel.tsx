@@ -28,7 +28,7 @@ const ServicesCarousel: React.FC<Props> = ({ services }) => {
 
   return (
     <div className="mb-8 bg-[#fafafa] p-5">
-      <h3 className="text-[26px] font-extrabold text-[#1a1a2e] m-0 mb-4">
+      <h3 className="text-[26px] font-extrabold font-heading text-black m-0 mb-4">
         Services you may like
       </h3>
 

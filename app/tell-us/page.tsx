@@ -7,6 +7,7 @@ import logo from "../assets/logo.png";
 import {
   Camera, User, Calendar, MapPin, Upload, ChevronDown, Check, BadgeCheck,
 } from "lucide-react";
+import { Dashhboard } from "../icons";
 
 const categories = [
   "Graphics Designer", "Illustrators", "UI/UX Designers",
@@ -59,25 +60,25 @@ const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoT
     <div className="bg-white rounded-2xl px-12 py-10 w-[80%] lg:w-[420px] flex flex-col items-center text-center shadow-2xl">
 
       {/* Icon */}
-      <div className="w-[90px] h-[90px] rounded-full bg-[#2563EB] flex items-center justify-center mb-5">
-        <BadgeCheck size={52} fill="white" stroke="#2563EB" />
+      <div className="w-[90px] h-[90px] rounded-full bg-[#2196F3] flex items-center justify-center mb-5">
+        <Dashhboard  />
       </div>
 
       {/* Text */}
-      <h2 className="text-[22px] font-bold text-[#2563EB] m-0 mb-1">
+      <h2 className="text-[24px] font-heading font-bold text-[#2196F3] m-0 mb-1">
         Congratulations!
       </h2>
-      <p className="text-[16px] font-semibold text-[#2563EB] m-0 mb-3">
+      <p className="text-[20px] font-heading font-semibold text-[#2196F3] m-0 mb-3">
         Your profile is complete
       </p>
-      <p className="text-[14px] text-gray-600 m-0 mb-7 leading-relaxed max-w-[260px]">
+      <p className="text-[14px] font-body text-black m-0 mb-7 leading-relaxed max-w-[260px]">
         You can now post projects and connect with the right creatives.
       </p>
 
       {/* Button */}
       <button
         onClick={onGoToDashboard}
-        className="bg-[#2563EB] border-none rounded-lg px-8 py-2.5 cursor-pointer text-white font-semibold text-xs lg:text-[14px] hover:bg-blue-700 transition-colors"
+        className="bg-[#2196F3] border-none rounded-lg px-8 py-2.5 cursor-pointer text-white font-semibold text-xs lg:text-[14px] hover:bg-blue-700 transition-colors"
       >
         Go to Dashboard
       </button>

@@ -26,11 +26,11 @@ const PitchCard: React.FC<{ pitch: Pitch }> = ({ pitch }) => (
 
       {/* Name + Verified */}
       <div className="flex items-center gap-1">
-        <span className="text-2xl font-bold text-[#1a1a2e]">{pitch.name}</span>
+        <span className="text-2xl font-bold font-heading text-black">{pitch.name}</span>
         {pitch.verified && <BadgeCheck size={14} fill="#3B82F6" stroke="white" />}
       </div>
 
-      <span className="text-[14px] text-gray-500">{pitch.role}</span>
+      <span className="text-sm text-black">{pitch.role}</span>
 
       {/* Rating + Rate + Projects */}
       <div className="flex items-center gap-2.5 mt-1">
@@ -65,7 +65,7 @@ const IncomingPitches: React.FC<Props> = ({ pitches }) => {
   return (
     <div className="flex-1 bg-[#fafafa] p-5">
       <div className="flex justify-between items-center mb-3">
-        <h3 className="text-[26px] font-extrabold text-[#1a1a2e] m-0">
+        <h3 className="text-[26px] font-heading font-extrabold text-black m-0">
           Incoming Pitches
         </h3>
         <button className="bg-transparent border-none text-[#e2554f] font-semibold text-[13px] cursor-pointer hover:underline">
