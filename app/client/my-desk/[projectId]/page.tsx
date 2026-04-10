@@ -10,6 +10,7 @@ import { X, ChevronDown, BadgeCheck, ThumbsUp, DollarSign } from "lucide-react";
 import { showReviewCreativeToast } from "@/app/components/ui/toasts";
 import { showAddtoFavoriteToast } from "@/app/components/ui/toasts";
 import { showPartiallyToast } from "@/app/components/ui/toasts";
+import { showRevisionToast } from "@/app/components/ui/toasts";
 
 interface Props {
     onClose: () => void;
@@ -61,7 +62,7 @@ function CollapsibleSection({
     );
 }
 
-const RevisionsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => {
+const RevisionsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const inputClass = "w-full border border-gray-200 rounded-lg px-3.5 py-[11px] text-[13px] text-black outline-none bg-white box-border";
 
     const [form, setForm] = useState({
@@ -70,6 +71,13 @@ const RevisionsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashb
 
     const update = (key: string, value: string) =>
         setForm((prev) => ({ ...prev, [key]: value }));
+
+    const handleRevision = () => {
+          // Replace with your actual API call:
+          // await fetch("/api/wallet/fund", { method: "POST", body: JSON.stringify({ amount, gateway: selectedGateway }) });
+          onClose();
+          showRevisionToast();
+        };
 
     return (
         <div className="fixed inset-0 bg-black/40 flex items-center mt-10 justify-center z-50">
@@ -105,7 +113,7 @@ const RevisionsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashb
                     />
                 </div>
                 <button
-                    onClick={onGoToDashboard}
+                    onClick={handleRevision}
                     className="bg-[#E2554F] border-none rounded-lg px-8 py-2.5 cursor-pointer text-black font-semibold text-xs lg:text-[14px] hover:bg-[#E2554F] hover:text-white transition-colors"
                 >
                     Submit
@@ -309,7 +317,7 @@ export default function ViewProjectPage() {
     return (
         <div className="flex flex-col min-h-screen bg-white">
             {showModal && (
-                <RevisionsModal onGoToDashboard={() => {
+                <RevisionsModal onClose={() => {
                     setShowModal(false);
                 }} />
             )}

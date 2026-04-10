@@ -122,6 +122,26 @@ export const showPartiallyToast = () => {
   );
 };
 
+export const showRevisionToast = () => {
+  toast.custom(
+    (t) => (
+      <div
+        className={`flex items-center gap-3 bg-green-100 border border-green-100 rounded-xl px-4 py-3 shadow-sm max-w-sm transition-all ${
+          t.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        }`}
+      >
+        <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+          <Check size={18} strokeWidth={3} className="text-white" />
+        </div>
+        <p className="text-sm text-gray-700 leading-snug">
+          Your request has been successfully submitted. The Creative will be notified.
+        </p>
+      </div>
+    ),
+    { duration: 4000 }
+  );
+};
+
 
 // ✅ Toast 2 — Collab Request Success
 export const showCollabInviteToast = (name: string) => {
