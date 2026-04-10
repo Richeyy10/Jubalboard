@@ -6,7 +6,7 @@ export const showFundAddedToast = () => {
   toast.custom(
     (t) => (
       <div
-        className={`flex items-center gap-3 bg-[#F0FAF0] border border-green-100 rounded-xl px-4 py-3 shadow-sm max-w-sm transition-all ${
+        className={`flex items-center gap-3 bg-green-100 border border-green-100 rounded-xl px-4 py-3 shadow-sm max-w-sm transition-all ${
           t.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
         }`}
       >
@@ -14,13 +14,114 @@ export const showFundAddedToast = () => {
           <Check size={18} strokeWidth={3} className="text-white" />
         </div>
         <p className="text-sm text-gray-700 leading-snug">
-          Your fund has been successfully added and your wallet credited
+          Your fund has been successfully added and your wallet credited.
         </p>
       </div>
     ),
     { duration: 4000 }
   );
 };
+
+export const showFundWithdrawnToast = () => {
+  toast.custom(
+    (t) => (
+      <div
+        className={`flex items-center gap-3 bg-green-100 border border-green-100 rounded-xl px-4 py-3 shadow-sm max-w-sm transition-all ${
+          t.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        }`}
+      >
+        <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+          <Check size={18} strokeWidth={3} className="text-white" />
+        </div>
+        <p className="text-sm text-gray-700 leading-snug">
+          Your fund is still processing and you will receive it shortly.
+        </p>
+      </div>
+    ),
+    { duration: 4000 }
+  );
+};
+
+export const showReviewCreativeToast = () => {
+  toast.custom(
+    (t) => (
+      <div
+        className={`flex items-center gap-3 bg-green-100 border border-green-100 rounded-xl px-4 py-3 shadow-sm max-w-sm transition-all ${
+          t.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        }`}
+      >
+        <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+          <Check size={18} strokeWidth={3} className="text-white" />
+        </div>
+        <p className="text-sm text-gray-700 leading-snug">
+          Your Review about the Creative has been successfully submitted.
+        </p>
+      </div>
+    ),
+    { duration: 4000 }
+  );
+};
+
+export const showAddtoFavoriteToast = () => {
+  toast.custom(
+    (t) => (
+      <div
+        className={`flex items-center gap-3 bg-green-100 border border-green-100 rounded-xl px-4 py-3 shadow-sm max-w-sm transition-all ${
+          t.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        }`}
+      >
+        <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+          <Check size={18} strokeWidth={3} className="text-white" />
+        </div>
+        <p className="text-sm text-gray-700 leading-snug">
+          Natasha John has been successfully added to your favorite for multiple jobs.
+        </p>
+      </div>
+    ),
+    { duration: 4000 }
+  );
+};
+
+export const showSendBriefToast = () => {
+  toast.custom(
+    (t) => (
+      <div
+        className={`flex items-center gap-3 bg-green-100 border border-green-100 rounded-xl px-4 py-3 shadow-sm max-w-sm transition-all ${
+          t.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        }`}
+      >
+        <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+          <Check size={18} strokeWidth={3} className="text-white" />
+        </div>
+        <p className="text-sm text-gray-700 leading-snug">
+          Your brief has been sent successfully to Natasha John. Wait for her pitch.
+        </p>
+      </div>
+    ),
+    { duration: 4000 }
+  );
+};
+
+export const showPartiallyToast = () => {
+  toast.custom(
+    (t) => (
+      <div
+        className={`flex items-center gap-3 bg-green-100 border border-green-100 rounded-xl px-4 py-3 shadow-sm max-w-sm transition-all ${
+          t.visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+        }`}
+      >
+        <div className="w-9 h-9 rounded-full bg-green-500 flex items-center justify-center shrink-0">
+          <Check size={18} strokeWidth={3} className="text-white" />
+        </div>
+        <p className="text-sm text-gray-700 leading-snug">
+          You've selected Partially Completed, and the project status will be changed.
+        </p>
+      </div>
+    ),
+    { duration: 4000 }
+  );
+};
+
 
 // ✅ Toast 2 — Collab Request Success
 export const showCollabInviteToast = (name: string) => {

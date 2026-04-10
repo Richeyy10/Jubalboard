@@ -40,7 +40,7 @@ const Sidebar: React.FC<Props> = () => {
   return (
     <div className="w-[200px] lg:w-[300px] h-full h-screen bg-[#fafafa] border-r border-[#f0f0f0] pt-8 lg:pt-5 flex flex-col overflow-y-auto justify-center lg:justify-start lg:pt-10 lg:pl-10">
       {navItems.map((item) => {
-        const isActive = pathname === item.path;
+        const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
         return (
           <div
             key={item.label}

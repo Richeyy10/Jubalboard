@@ -2,6 +2,11 @@
 
 import { useState } from "react";
 import { ArrowLeft, X } from "lucide-react";
+import { showFundWithdrawnToast } from "@/app/components/ui/toasts";
+
+interface Props {
+  onClose: () => void;
+}
 
 const quickAmounts = ["$50", "$100", "$200", "$500", "$1,000"];
 
@@ -24,6 +29,14 @@ export default function WithdrawModal({
   const numericAmount = parseFloat(amount.replace(/[^0-9.]/g, "")) || 0;
   const serviceFee = numericAmount > 0 ? 10 : 0;
   const youReceive = numericAmount - serviceFee;
+
+  const handleWithdrawFund = () => {
+      if (!amount) return;
+      // Replace with your actual API call:
+      // await fetch("/api/wallet/fund", { method: "POST", body: JSON.stringify({ amount, gateway: selectedGateway }) });
+      onClose();
+      showFundWithdrawnToast();
+    };
 
   return (
     <div className="fixed mt-20 inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -128,7 +141,7 @@ export default function WithdrawModal({
         </div>
 
         {/* Withdraw button */}
-        <button className="w-full py-3 bg-[#e84545] hover:bg-[#d03535] text-white font-semibold rounded-xl transition-colors mb-3">
+        <button onClick={handleWithdrawFund} className="w-full py-3 bg-[#e84545] hover:bg-[#d03535] text-white font-semibold rounded-xl transition-colors mb-3">
           Withdraw
         </button>
 

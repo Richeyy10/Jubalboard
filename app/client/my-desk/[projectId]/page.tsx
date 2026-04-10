@@ -7,6 +7,13 @@ import DashboardTopbar from "@/app/components/client/dashboard/dashboardTopbar";
 import Breadcrumb from "@/app/components/client/my-desk/breadcrumb";
 import { useParams, useRouter } from "next/navigation";
 import { X, ChevronDown, BadgeCheck, ThumbsUp, DollarSign } from "lucide-react";
+import { showReviewCreativeToast } from "@/app/components/ui/toasts";
+import { showAddtoFavoriteToast } from "@/app/components/ui/toasts";
+import { showPartiallyToast } from "@/app/components/ui/toasts";
+
+interface Props {
+    onClose: () => void;
+}
 
 const StarIcon = () => (
     <svg viewBox="0 0 20 20" fill="#F5A623" className="w-4 h-4">
@@ -172,6 +179,12 @@ const RateAndReviewModal: React.FC<{ onClose: () => void; onSubmit: () => void }
     const [review, setReview] = useState("");
     const [favourite, setFavourite] = useState<"yes" | "no" | null>(null);
 
+    const AddtoFavorite = () => {
+        // Replace with your actual API call:
+        // await fetch("/api/wallet/fund", { method: "POST", body: JSON.stringify({ amount, gateway: selectedGateway }) });
+        showAddtoFavoriteToast();
+    };
+
     return (
         <div className="fixed inset-0 bg-black/40 mt-20 flex items-center justify-center z-50 p-6">
             <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden">
@@ -241,10 +254,10 @@ const RateAndReviewModal: React.FC<{ onClose: () => void; onSubmit: () => void }
                     <p className="font-bold text-black mb-4">Add this Creative to Favourite?</p>
                     <div className="flex items-center justify-center gap-3">
                         <button
-                            onClick={() => setFavourite("yes")}
+                            onClick={() => {setFavourite("yes"); AddtoFavorite(); } }
                             className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${favourite === "yes"
-                                    ? "bg-[#E2554F] text-white"
-                                    : "bg-[#E2554F]/80 hover:bg-[#E2554F] text-white"
+                                ? "bg-[#E2554F] text-white"
+                                : "bg-[#E2554F]/80 hover:bg-[#E2554F] text-white"
                                 }`}
                         >
                             Yes
@@ -252,8 +265,8 @@ const RateAndReviewModal: React.FC<{ onClose: () => void; onSubmit: () => void }
                         <button
                             onClick={() => setFavourite("no")}
                             className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${favourite === "no"
-                                    ? "bg-[#E2554F] text-white"
-                                    : "bg-[#E2554F]/80 hover:bg-[#E2554F] text-white"
+                                ? "bg-[#E2554F] text-white"
+                                : "bg-[#E2554F]/80 hover:bg-[#E2554F] text-white"
                                 }`}
                         >
                             No
@@ -286,6 +299,13 @@ export default function ViewProjectPage() {
     const [showReleasedModal, setShowReleasedModal] = useState(false);
     const [showRateModal, setShowRateModal] = useState(false);
 
+    const handlePartially = () => {
+          // Replace with your actual API call:
+          // await fetch("/api/wallet/fund", { method: "POST", body: JSON.stringify({ amount, gateway: selectedGateway }) });
+          setShowModal(false);
+          showPartiallyToast();
+        };
+
     return (
         <div className="flex flex-col min-h-screen bg-white">
             {showModal && (
@@ -310,6 +330,9 @@ export default function ViewProjectPage() {
                 <RateAndReviewModal
                     onClose={() => setShowRateModal(false)}
                     onSubmit={() => {
+                        // Replace with your actual API call:
+                        // await fetch("/api/wallet/fund", { method: "POST", body: JSON.stringify({ amount, gateway: selectedGateway }) });
+                        showReviewCreativeToast();
                         setShowRateModal(false);
                         router.push("/client/my-desk");
                     }}
@@ -600,7 +623,7 @@ export default function ViewProjectPage() {
                                     Done reviewing? Pick an option below to update the project status.
                                 </p>
                                 <div className="flex items-center justify-center gap-3 flex-wrap">
-                                    <button className="px-5 py-2 bg-[#e84545] hover:bg-[#d03535] text-white text-sm font-semibold rounded-lg transition-colors">
+                                    <button onClick={handlePartially} className="px-5 py-2 bg-[#e84545] hover:bg-[#d03535] text-white text-sm font-semibold rounded-lg transition-colors">
                                         Partially Completed
                                     </button>
                                     <button onClick={() => setShowModal(true)} className="px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-white text-sm font-semibold rounded-lg transition-colors">

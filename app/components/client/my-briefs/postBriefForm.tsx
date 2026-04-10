@@ -1,14 +1,44 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, Upload, Calendar, MapPin } from "lucide-react";
+import { ChevronDown, Upload, Calendar, MapPin, Check } from "lucide-react";
 import { useBriefStore } from "../../../lib/stores/briefStore";
+
+const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-orange-400/80 rounded-2xl px-12 py-10 w-[80%] lg:w-[420px] flex flex-col items-center text-center shadow-2xl">
+
+      {/* Icon */}
+      <div className="w-[90px] h-[90px] rounded-full bg-white flex items-center justify-center mb-5">
+        <Check size={52} fill="white" stroke="#fb923c" />
+      </div>
+
+      {/* Text */}
+      <h2 className="text-[22px] font-bold text-white m-0 mb-1">
+        Your Project is live!
+      </h2>
+      <p className="text-[14px] text-white m-0 mb-7 leading-relaxed max-w-[260px]">
+        Your job is now visible to creatives. We'll notify you when pitch comes in
+      </p>
+
+      {/* Button */}
+      <button
+        onClick={onGoToDashboard}
+        className="bg-white border-none rounded-lg px-8 py-2.5 cursor-pointer text-[#fb923c] font-semibold text-xs lg:text-[14px] hover:bg-orange-500 hover:text-black transition-colors"
+      >
+        Go to Dashboard
+      </button>
+
+    </div>
+  </div>
+);
 
 const PostBriefForm: React.FC = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { form, setField } = useBriefStore();
+  const [showModal, setShowModal] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
@@ -24,6 +54,9 @@ const PostBriefForm: React.FC = () => {
 
   return (
     <div>
+      {showModal && (
+        <CongratulationsModal onGoToDashboard={() => router.push("/client/dashboard")} />
+      )}
       <h1 className="text-2xl font-heading font-extrabold text-black mb-6">Post a Brief</h1>
 
       <div className="bg-[#fafafa] rounded-2xl p-6 flex flex-col gap-6">
@@ -210,7 +243,7 @@ const PostBriefForm: React.FC = () => {
           Preview Brief
         </button>
         <button
-          onClick={handlePostJob}
+          onClick={() => setShowModal(true)}
           className="bg-[#E05C5C] text-white font-semibold px-8 py-3 rounded-xl hover:bg-[#d04f4f] transition-colors"
         >
           Post Job

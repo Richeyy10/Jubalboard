@@ -6,6 +6,7 @@ import DashboardTopbar from "@/app/components/client/dashboard/dashboardTopbar";
 import Breadcrumb from "../../components/client/my-desk/breadcrumb";
 import Pagination from "../../components/client/my-desk/pagination";
 import { Search, Filter, ChevronDown, X, Eye } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 type BriefStatus = "Active" | "Assigned" | "Expired" | "Closed";
 type FilterTab = "All Briefs" | "Active" | "Assigned" | "Expired" | "Closed";
@@ -39,6 +40,7 @@ const statusStyles: Record<BriefStatus, string> = {
 const tabs: FilterTab[] = ["All Briefs", "Active", "Assigned", "Expired", "Closed"];
 
 const MyBriefs: React.FC = () => {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("All Briefs");
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,7 +94,7 @@ const MyBriefs: React.FC = () => {
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
             <h1 className="text-2xl font-heading font-extrabold text-black">Briefs</h1>
-            <button className="bg-[#E05C5C] text-white font-semibold px-5 py-2.5 rounded-lg text-sm hover:bg-[#d04f4f] transition-colors">
+            <button onClick={() => router.push("/client/my-briefs/post")} className="bg-[#E05C5C] text-white font-semibold px-5 py-2.5 rounded-lg text-sm hover:bg-[#d04f4f] transition-colors">
               Post a Brief
             </button>
           </div>
@@ -172,7 +174,7 @@ const MyBriefs: React.FC = () => {
                     <span className={`text-xs font-medium px-3 py-1 rounded-full ${statusStyles[brief.status]}`}>
                       {brief.status}
                     </span>
-                    <button className="flex items-center gap-1.5 bg-[#E05C5C] text-white text-sm px-4 py-2 rounded-lg">
+                    <button onClick={() => router.push("/client/my-briefs/")} className="flex items-center gap-1.5 bg-[#E05C5C] text-white text-sm px-4 py-2 rounded-lg">
                       <Eye size={14} />
                       View Details
                     </button>
