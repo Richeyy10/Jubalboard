@@ -1,9 +1,10 @@
+// app/components/client/messages/clientChatWindow.tsx
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { Smile, Paperclip, ArrowLeft, Mic } from "lucide-react";
 import { Conversation } from "@/app/types";
 import { useMessageStore } from "../../../lib/stores/messageStore";
-import TopicChips from "@/app/components/creative/messages/topicChips";
+import ClientTopicChips from "./topicChips";
 import { Topic } from "../../../lib/topic";
 
 interface Props {
@@ -11,10 +12,10 @@ interface Props {
   onBack?: () => void;
 }
 
-const ChatWindow: React.FC<Props> = ({ conversation, onBack }) => {
+const ClientChatWindow: React.FC<Props> = ({ conversation, onBack }) => {
   const [input, setInput] = useState("");
   const [showChips, setShowChips] = useState(true);
-  const sendMessage = useMessageStore((s) => s.sendMessage);
+  const sendMessageAs = useMessageStore((s) => s.sendMessageAs);
   const conversations = useMessageStore((s) => s.conversations);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -32,15 +33,14 @@ const ChatWindow: React.FC<Props> = ({ conversation, onBack }) => {
   const handleSend = (text?: string) => {
     const content = text ?? input;
     if (!content.trim()) return;
-    sendMessage(conversation.id, content.trim());
+    // 👇 fromMe: true means this is the CLIENT sending
+    sendMessageAs(conversation.id, content.trim(), true);
     setInput("");
   };
 
-  const handleTopicSelect = (topic: Topic, breadcrumb: string) => {
-    sendMessage(conversation.id, topic.label);
-    if (!topic.subtopics?.length) {
-      setShowChips(false);
-    }
+  const handleTopicSelect = (topic: Topic) => {
+    sendMessageAs(conversation.id, topic.label, true);
+    if (!topic.subtopics?.length) setShowChips(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -51,135 +51,91 @@ const ChatWindow: React.FC<Props> = ({ conversation, onBack }) => {
   };
 
   return (
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
-  
-        {/* Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="lg:hidden p-1 -ml-1 text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <ArrowLeft size={20} />
-            </button>
+    <div className="flex-1 flex flex-col h-full overflow-hidden">
+
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white flex-shrink-0">
+        {onBack && (
+          <button onClick={onBack} className="lg:hidden p-1 -ml-1 text-gray-500">
+            <ArrowLeft size={20} />
+          </button>
+        )}
+        <div className="relative">
+          <img
+            src={conversation.avatar}
+            alt={conversation.name}
+            className="w-9 h-9 rounded-full object-cover"
+          />
+          {conversation.isOnline && (
+            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
           )}
-          <div className="relative">
-            {conversation.type === "group" ? (
-              <div className="w-9 h-9 relative">
-                {conversation.members?.slice(0, 2).map((m, i) => (
-                  <img
-                    key={i}
-                    src={m.avatar}
-                    alt={m.name}
-                    className={`w-6 h-6 rounded-full object-cover border-2 border-white absolute ${
-                      i === 0 ? "top-0 left-0" : "bottom-0 right-0"
-                    }`}
-                  />
-                ))}
-              </div>
-            ) : (
-              <>
-                <img
-                  src={conversation.avatar}
-                  alt={conversation.name}
-                  className="w-9 h-9 rounded-full object-cover"
-                />
-                {conversation.isOnline && (
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-white" />
-                )}
-              </>
-            )}
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900 text-sm">
-              {conversation.name}
-            </p>
-            <p className="text-xs text-gray-400">
-              {conversation.type === "group"
-                ? `${conversation.members?.length ?? 0} members`
-                : conversation.isOnline
-                ? "Online"
-                : "typically replies in 10 minutes"}
-            </p>
-          </div>
         </div>
-  
-        {/* 👇 Messages area — scrollable */}
-        <div className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-3 bg-white min-h-0">
-  
-          {/* Greeting */}
-          {/* <div className="flex flex-col items-start gap-1">
-            <div className="bg-gray-100 text-gray-800 px-4 py-2.5 rounded-2xl rounded-bl-sm text-sm max-w-[75%]">
-              👋 Hi there! What would you like to talk about today?
-            </div>
-            <span className="text-[11px] text-gray-400 ml-1">Just now</span>
-          </div> */}
-  
-          {/* Messages */}
-          {messages.map((msg) => (
+        <div>
+          <p className="font-semibold text-gray-900 text-sm">{conversation.name}</p>
+          <p className="text-xs text-gray-400">
+            {conversation.isOnline ? "Online" : "typically replies in 10 minutes"}
+          </p>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-3 bg-white min-h-0">
+
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex flex-col ${msg.fromMe ? "items-end" : "items-start"}`}
+          >
             <div
-              key={msg.id}
-              className={`flex flex-col ${
-                msg.fromMe ? "items-end" : "items-start"
+              className={`max-w-[80%] lg:max-w-[65%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                msg.fromMe
+                  ? "bg-orange-400 text-white rounded-br-sm"   // 👈 blue for client
+                  : "bg-gray-100 text-gray-800 rounded-bl-sm"
               }`}
             >
-              <div
-                className={`max-w-[80%] lg:max-w-[65%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-                  msg.fromMe
-                    ? "bg-orange-400 text-white rounded-br-sm"
-                    : "bg-gray-100 text-gray-800 rounded-bl-sm"
-                }`}
-              >
-                {msg.text}
-              </div>
-              <span className="text-[11px] text-gray-400 mt-1">{msg.time}</span>
+              {msg.text}
             </div>
-          ))}
-  
-          {/* Topic chips inside chat */}
-          {showChips && (
-            <TopicChips onSelect={handleTopicSelect} />
-          )}
-  
-          <div ref={bottomRef} />
-        </div>
-  
-        {/* Input */}
-        <div className="px-3 py-3 border-t border-gray-100 bg-white flex items-center gap-2 flex-shrink-0">
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0">
-            <Smile size={19} />
-          </button>
-          <input
-            type="text"
-            placeholder="Send a message"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none min-w-0"
-          />
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0">
-            <Paperclip size={19} />
-          </button>
-  
-          {/* 👇 Mic when empty, Send when typing */}
-          {input.trim() ? (
-            <button
-              onClick={() => handleSend()}
-              className="w-8 h-8 bg-[#1a1a2e] hover:bg-[#2a2a4e] rounded-full flex items-center justify-center transition-colors flex-shrink-0"
-            >
-              <svg viewBox="0 0 20 20" fill="white" className="w-4 h-4 rotate-90">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
-            </button>
-          ) : (
-            <button className="w-8 h-8 bg-[#1a1a2e] hover:bg-[#2a2a4e] rounded-full flex items-center justify-center transition-colors flex-shrink-0">
-              <Mic size={15} className="text-white" />
-            </button>
-          )}
-        </div>
-  
+            <span className="text-[11px] text-gray-400 mt-1">{msg.time}</span>
+          </div>
+        ))}
+
+        {showChips && <ClientTopicChips onSelect={handleTopicSelect} />}
+        <div ref={bottomRef} />
       </div>
-    );
-  };
-  
-  export default ChatWindow;
+
+      {/* Input */}
+      <div className="px-3 py-3 border-t border-gray-100 bg-white flex items-center gap-2 flex-shrink-0">
+        <button className="p-1.5 text-gray-400 hover:text-gray-600 flex-shrink-0">
+          <Smile size={19} />
+        </button>
+        <input
+          type="text"
+          placeholder="Send a message"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="flex-1 bg-transparent text-sm text-gray-700 placeholder-gray-400 focus:outline-none min-w-0"
+        />
+        <button className="p-1.5 text-gray-400 hover:text-gray-600 flex-shrink-0">
+          <Paperclip size={19} />
+        </button>
+        {input.trim() ? (
+          <button
+            onClick={() => handleSend()}
+            className="w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors flex-shrink-0"
+          >
+            <svg viewBox="0 0 20 20" fill="white" className="w-4 h-4 rotate-90">
+              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            </svg>
+          </button>
+        ) : (
+          <button className="w-8 h-8 bg-blue-500 hover:bg-blue-600 rounded-full flex items-center justify-center transition-colors flex-shrink-0">
+            <Mic size={15} className="text-white" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ClientChatWindow;

@@ -3,31 +3,29 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 import { useMessageStore } from "../../../lib/stores/messageStore";
-import { useOpenChat } from "../../../lib/hooks/useOpenChat";
+import { useOpenClientChat } from "../../../lib/hooks/useOpenClientChat";
 import { Conversation } from "@/app/types";
 
-type Props = {};
-
-const ConversationList = () => {
+const ClientConversationList = () => {
   const [search, setSearch] = useState("");
   const conversations = useMessageStore((s) => s.conversations);
   const activeConversationId = useMessageStore((s) => s.activeConversationId);
-  const { openDM, openGroup } = useOpenChat();
+  const { openDM, openGroup } = useOpenClientChat();
 
   const filtered = conversations.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleSelect = (convo: Conversation) => {
-    if (convo.type === "group") {
+    if (convo.type === "group" || convo.isGroup) {
       openGroup({
-        id: convo.id.replace("group_", ""),
+        id: convo.id,
         title: convo.name,
         members: convo.members ?? [],
       });
     } else {
       openDM({
-        id: convo.id.replace("dm_", ""),
+        id: convo.id,
         name: convo.name,
         avatar: convo.avatar ?? "",
         isOnline: convo.isOnline,
@@ -37,7 +35,6 @@ const ConversationList = () => {
 
   return (
     <div className="w-full flex flex-col overflow-hidden">
-
       {/* Search */}
       <div className="p-3 border-b border-gray-100 flex-shrink-0">
         <div className="relative">
@@ -47,7 +44,7 @@ const ConversationList = () => {
             placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-100 transition-all"
+            className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
           />
         </div>
       </div>
@@ -61,24 +58,25 @@ const ConversationList = () => {
             <div
               key={convo.id}
               onClick={() => handleSelect(convo)}
-              className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors border-b border-gray-50 ${activeConversationId === convo.id ? "bg-amber-50" : "hover:bg-gray-50"
-                }`}
+              className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors border-b border-gray-50 ${
+                activeConversationId === convo.id ? "bg-blue-50" : "hover:bg-gray-50" // 👈 blue tint for client
+              }`}
             >
               {/* Avatar */}
               <div className="relative flex-shrink-0">
-                {convo.type === "group" ? (
-                  // Group avatar — stack first 2 member avatars
+                {convo.type === "group" || convo.isGroup ? (
                   <div className="w-10 h-10 relative">
                     {convo.members?.slice(0, 2).map((m, i) => (
                       <img
                         key={i}
                         src={m.avatar}
                         alt={m.name}
-                        className={`w-7 h-7 rounded-full object-cover border-2 border-white absolute ${i === 0 ? "top-0 left-0" : "bottom-0 right-0"
-                          }`}
+                        className={`w-7 h-7 rounded-full object-cover border-2 border-white absolute ${
+                          i === 0 ? "top-0 left-0" : "bottom-0 right-0"
+                        }`}
                       />
                     ))}
-                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-orange-400 rounded-full flex items-center justify-center">
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-400 rounded-full flex items-center justify-center">
                       <span className="text-white text-[8px] font-bold">G</span>
                     </div>
                   </div>
@@ -109,7 +107,7 @@ const ConversationList = () => {
                       : convo.lastMessage}
                   </p>
                   {(convo.unread ?? 0) > 0 && (
-                    <span className="ml-1 flex-shrink-0 w-4 h-4 bg-[#E2554F] rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+                    <span className="ml-1 flex-shrink-0 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
                       {convo.unread}
                     </span>
                   )}
@@ -123,4 +121,4 @@ const ConversationList = () => {
   );
 };
 
-export default ConversationList;
+export default ClientConversationList;

@@ -19,21 +19,21 @@ const ConversationList = () => {
   );
 
   const handleSelect = (convo: Conversation) => {
-    if (convo.type === "group") {
-      openGroup({
-        id: convo.id.replace("group_", ""),
-        title: convo.name,
-        members: convo.members ?? [],
-      });
-    } else {
-      openDM({
-        id: convo.id.replace("dm_", ""),
-        name: convo.name,
-        avatar: convo.avatar ?? "",
-        isOnline: convo.isOnline,
-      });
-    }
-  };
+  if (convo.type === "group" || convo.isGroup) {
+    openGroup({
+      id: convo.id, // 👈 pass full id, don't strip
+      title: convo.name,
+      members: convo.members ?? [],
+    });
+  } else {
+    openDM({
+      id: convo.id, // 👈 pass full id, don't strip
+      name: convo.name,
+      avatar: convo.avatar ?? "",
+      isOnline: convo.isOnline,
+    });
+  }
+};
 
   return (
     <div className="w-full flex flex-col overflow-hidden">

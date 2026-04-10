@@ -1,16 +1,17 @@
+// app/components/client/messages/clientTopicChips.tsx
 "use client";
 import { useState } from "react";
-import { topics, Topic } from "../../../lib/topic";
+import { clientTopics, Topic } from "../../../lib/topic";
 import { ChevronLeft } from "lucide-react";
 
 type Props = {
   onSelect: (topic: Topic, breadcrumb: string) => void;
 };
 
-export default function TopicChips({ onSelect }: Props) {
+export default function ClientTopicChips({ onSelect }: Props) {
   const [history, setHistory] = useState<Topic[]>([]);
   const current = history[history.length - 1];
-  const visibleTopics = current?.subtopics ?? topics;
+  const visibleTopics = current?.subtopics ?? clientTopics;
 
   const handleChipClick = (topic: Topic) => {
     const breadcrumb = [...history.map((t) => t.label), topic.label].join(" > ");
@@ -26,7 +27,6 @@ export default function TopicChips({ onSelect }: Props) {
 
   return (
     <div className="flex flex-col items-end gap-2 py-1">
-      {/* Back button */}
       {history.length > 0 && (
         <button
           onClick={() => setHistory((prev) => prev.slice(0, -1))}
@@ -36,8 +36,6 @@ export default function TopicChips({ onSelect }: Props) {
           Back
         </button>
       )}
-
-      {/* Chips — right aligned, orange */}
       <div className="flex flex-wrap justify-end gap-2 max-w-[85%]">
         {visibleTopics.map((topic) => (
           <button

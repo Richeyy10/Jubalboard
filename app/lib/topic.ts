@@ -57,3 +57,62 @@ export const topics: Topic[] = [
     ],
   },
 ];
+
+export const clientTopics: Topic[] = [
+  {
+    id: "project",
+    label: "📋 Project Brief",
+    subtopics: [
+      { id: "project-start",    label: "When can you start?" },
+      { id: "project-timeline", label: "What's your timeline?" },
+      { id: "project-samples",  label: "Can I see samples?" },
+      { id: "project-process",  label: "Walk me through your process" },
+    ],
+  },
+  {
+    id: "pricing",
+    label: "💰 Pricing",
+    subtopics: [
+      { id: "price-quote",     label: "Request a quote" },
+      { id: "price-negotiate", label: "Negotiate price" },
+      { id: "price-deposit",   label: "How much is the deposit?" },
+      { id: "price-payment",   label: "Payment methods" },
+    ],
+  },
+  {
+    id: "revisions",
+    label: "✏️ Revisions",
+    subtopics: [
+      { id: "rev-how-many", label: "How many revisions?" },
+      { id: "rev-request",  label: "Request a revision" },
+      { id: "rev-feedback", label: "Give feedback" },
+    ],
+  },
+  {
+    id: "delivery",
+    label: "📦 Delivery",
+    subtopics: [
+      { id: "del-formats",  label: "What file formats?" },
+      { id: "del-deadline", label: "Can you meet my deadline?" },
+      { id: "del-rush",     label: "Rush delivery" },
+    ],
+  },
+  {
+    id: "status",
+    label: "🔄 Project Status",
+    subtopics: [
+      { id: "status-update",   label: "Any updates?" },
+      { id: "status-progress", label: "How far along are you?" },
+      { id: "status-stuck",    label: "Is anything blocking you?" },
+    ],
+  },
+  {
+    id: "contract",
+    label: "📝 Contract",
+    subtopics: [
+      { id: "ct-nda",    label: "I need an NDA" },
+      { id: "ct-terms",  label: "Review contract terms" },
+      { id: "ct-rights", label: "Who owns the rights?" },
+    ],
+  },
+];

@@ -108,7 +108,7 @@ const DisputesContent: React.FC = () => {
                 {dispute.status}
               </span>
               <button
-                onClick={() => router.push(`/creative/dispute/${dispute.id.replace("#", "")}`)}
+                onClick={() => router.push(`/client/dispute/${dispute.id.replace("#", "")}`)}
                 className="flex items-center gap-1.5 bg-[#E05C5C] text-white text-sm px-4 py-2 rounded-lg"
               >
                 <Eye size={14} />

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { Conversation, Message } from "@/app/types";
+import { Conversation } from "@/app/types";
 
 type MessageStore = {
   conversations: Conversation[];
@@ -8,6 +8,7 @@ type MessageStore = {
   setActiveConversation: (id: string) => void;
   addOrUpdateConversation: (convo: Conversation) => void;
   sendMessage: (conversationId: string, text: string) => void;
+  sendMessageAs: (conversationId: string, text: string, fromMe: boolean) => void; // 👈 add this
 };
 
 export const useMessageStore = create<MessageStore>()(
@@ -34,6 +35,7 @@ export const useMessageStore = create<MessageStore>()(
           return { conversations: [convo, ...state.conversations] };
         }),
 
+      // 👇 sendMessage just calls sendMessageAs with fromMe: true
       sendMessage: (conversationId, text) =>
         set((state) => ({
           conversations: state.conversations.map((c) =>
@@ -46,6 +48,32 @@ export const useMessageStore = create<MessageStore>()(
                       id: Date.now().toString(),
                       text,
                       fromMe: true,
+                      time: new Date().toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
+                    },
+                  ],
+                  lastMessage: text,
+                  lastTime: "Now",
+                }
+              : c
+          ),
+        })),
+
+      // 👇 sendMessageAs lets you control fromMe
+      sendMessageAs: (conversationId, text, fromMe) =>
+        set((state) => ({
+          conversations: state.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: [
+                    ...c.messages,
+                    {
+                      id: Date.now().toString(),
+                      text,
+                      fromMe,
                       time: new Date().toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
