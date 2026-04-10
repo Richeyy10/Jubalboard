@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { showFundAddedToast } from "@/app/components/ui/toasts";
 
 interface Props {
   onClose: () => void;
@@ -52,6 +53,14 @@ const gateways = [
 const AddFundModal: React.FC<Props> = ({ onClose }) => {
   const [amount, setAmount] = useState("");
   const [selectedGateway, setSelectedGateway] = useState("Mastercard");
+
+  const handleAddFund = () => {
+    if (!amount) return;
+    // Replace with your actual API call:
+    // await fetch("/api/wallet/fund", { method: "POST", body: JSON.stringify({ amount, gateway: selectedGateway }) });
+    onClose();
+    showFundAddedToast();
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center mt-20 z-50 px-4">
@@ -126,7 +135,11 @@ const AddFundModal: React.FC<Props> = ({ onClose }) => {
 
         {/* Add Fund button */}
         <div className="px-6 pb-6 pt-3">
-          <button className="w-full py-3 bg-[#e84545] hover:bg-[#d03535] text-white font-bold rounded-xl transition-colors">
+          <button
+            onClick={handleAddFund}
+            className="w-full py-3 bg-[#e84545] hover:bg-[#d03535] text-white font-bold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!amount}
+          >
             Add Fund
           </button>
         </div>

@@ -26,12 +26,13 @@ const MyDesk: React.FC = () => {
   const [perPage, setPerPage] = useState<number>(10);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const filtered = deskProjects.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.assignee.toLowerCase().includes(search.toLowerCase());
+  const filtered = deskProjects.filter((project) => {
+  const matchesSearch =
+    project.title.toLowerCase().includes(search.toLowerCase()) ||
+    project.assignee.name.toLowerCase().includes(search.toLowerCase()) ||
+    project.client.name.toLowerCase().includes(search.toLowerCase());
     const matchesTab =
-      activeTab === "All Projects" || p.status === tabStatusMap[activeTab];
+      activeTab === "All Projects" || project.status === tabStatusMap[activeTab];
     return matchesSearch && matchesTab;
   });
 
