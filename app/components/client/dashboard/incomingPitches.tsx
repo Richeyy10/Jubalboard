@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Star, BadgeCheck, MessageSquare } from "lucide-react";
 import type { Pitch } from "../../../types";
+import { useRouter } from "next/navigation";
 
 interface Props {
   pitches: Pitch[];
@@ -62,13 +63,14 @@ const PitchCard: React.FC<{ pitch: Pitch }> = ({ pitch }) => (
 );
 
 const IncomingPitches: React.FC<Props> = ({ pitches }) => {
+  const router = useRouter();
   return (
     <div className="flex-1 bg-[#fafafa] p-5">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-[26px] font-heading font-extrabold text-black m-0">
           Incoming Pitches
         </h3>
-        <button className="bg-transparent border-none text-[#e2554f] font-semibold text-[13px] cursor-pointer hover:underline">
+        <button onClick={() => router.push(`/client/pitches`)} className="bg-transparent border-none text-[#e2554f] font-semibold text-[13px] cursor-pointer hover:underline">
           View All
         </button>
       </div>

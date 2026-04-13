@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { MessageSquare } from "lucide-react";
 import type { Project } from "../../../types";
+import { useRouter } from "next/navigation";
 
 interface Props {
   projects: Project[];
@@ -60,13 +61,14 @@ const ProjectRow: React.FC<{ project: Project }> = ({ project }) => (
 );
 
 const ActiveProjects: React.FC<Props> = ({ projects }) => {
+  const router = useRouter();
   return (
     <div className="flex-1 bg-[#fafafa] p-5">
       <div className="flex justify-between items-center mb-3">
         <h3 className="text-[26px] font-extrabold font-heading text-black m-0">
           Active Projects
         </h3>
-        <button className="bg-transparent border-none text-[#e2554f] font-semibold text-[13px] cursor-pointer hover:underline">
+        <button onClick={() => router.push(`/client/my-desk`)} className="bg-transparent border-none text-[#e2554f] font-semibold text-[13px] cursor-pointer hover:underline">
           View All
         </button>
       </div>
