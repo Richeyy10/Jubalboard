@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { LucideIcon } from "lucide-react";
 import { Belll, Rocket } from "@/app/icons";
+import Link from "next/link";
 
 interface Banner {
   id: number;
@@ -70,25 +71,27 @@ const UpdateBanner: React.FC = () => {
         {banners.map((banner) => {
           const Icon = banner.icon;
           return (
-            <div
-              key={banner.id}
-              className="flex-1 flex items-center justify-between rounded-[10px] px-[18px] py-3.5"
-              style={{
-                background: banner.bgColor,
-                border: `1px solid ${banner.borderColor}`,
-              }}
-            >
-              <div className="flex items-center gap-3.5">
-                <Icon size={29} stroke={banner.iconColor} />
-                <div>
-                  <p className="m-0 font-heading font-bold text-lg lg:text-xl" style={{ color: banner.textColor }}>{banner.title}</p>
-                  <p className="m-0 text-sm font-body lg:text-md mt-0.5" style={{ color: banner.textColor }}>{banner.message}</p>
+            <Link href="/creative/notifications">
+              <div
+                key={banner.id}
+                className="flex-1 flex items-center justify-between rounded-[10px] px-[18px] py-3.5"
+                style={{
+                  background: banner.bgColor,
+                  border: `1px solid ${banner.borderColor}`,
+                }}
+              >
+                <div className="flex items-center gap-3.5">
+                  <Icon size={29} stroke={banner.iconColor} />
+                  <div>
+                    <p className="m-0 font-heading font-bold text-lg lg:text-xl" style={{ color: banner.textColor }}>{banner.title}</p>
+                    <p className="m-0 text-sm font-body lg:text-md mt-0.5" style={{ color: banner.textColor }}>{banner.message}</p>
+                  </div>
+                </div>
+                <div onClick={() => setVisible(false)} className="cursor-pointer p-1">
+                  <X size={16} stroke="black" />
                 </div>
               </div>
-              <div onClick={() => setVisible(false)} className="cursor-pointer p-1">
-                <X size={16} stroke="black" />
-              </div>
-            </div>
+            </Link>
           );
         })}
       </div>

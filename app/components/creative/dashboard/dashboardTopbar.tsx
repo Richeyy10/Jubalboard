@@ -1,6 +1,7 @@
 import Image from "next/image";
 import logo from "../../../assets/icononly.png";
 import { Bell, Menu, Settings, X } from "lucide-react";
+import Link from "next/link";
 
 interface Props {
   userName: string;
@@ -15,7 +16,7 @@ const DashboardTopbar: React.FC<Props> = ({ userName, userAvatar, sidebarOpen, o
 
       {/* Left — Hamburger/X toggle (mobile only) + Logo */}
       <div className="flex items-center">
-        
+
         <Image
           src={logo}
           alt="Jubal Board logo"
@@ -29,28 +30,34 @@ const DashboardTopbar: React.FC<Props> = ({ userName, userAvatar, sidebarOpen, o
       {/* Right — Icons + Avatar */}
       <div className="flex items-center gap-4">
         <div className="hidden lg:flex items-center gap-4">
-          <div className="cursor-pointer">
-            <Bell size={20} stroke="#374151" />
-          </div>
-          <div className="cursor-pointer">
-            <Settings size={20} stroke="#374151" />
-          </div>
+          <Link href="/creative/notifications">
+            <div className="cursor-pointer">
+              <Bell size={20} stroke="#374151" />
+            </div>
+          </Link>
+          <Link href="/creative/settings">
+            <div className="cursor-pointer">
+              <Settings size={20} stroke="#374151" />
+            </div>
+          </Link>
         </div>
 
         <div className="flex items-center gap-2.5 cursor-pointer">
-          <Image
-            src={userAvatar}
-            alt={userName}
-            width={36}
-            height={36}
-            className="rounded-full object-cover"
-          />
+          <Link href="/creative/my-profile">
+            <Image
+              src={userAvatar}
+              alt={userName}
+              width={36}
+              height={36}
+              className="rounded-full object-cover"
+            />
+          </Link>
           <span className="hidden lg:block text-[14px] font-semibold text-[#1a1a2e]">
             {userName}
           </span>
           <button className="lg:hidden" onClick={onMenuClick}>
-          {sidebarOpen ? <X size={24} stroke="black" /> : <Menu size={24} stroke="black" />}
-        </button>
+            {sidebarOpen ? <X size={24} stroke="black" /> : <Menu size={24} stroke="black" />}
+          </button>
         </div>
       </div>
 
