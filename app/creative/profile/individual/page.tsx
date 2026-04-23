@@ -3,12 +3,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import logo from "../assets/logo.png";
+import logo from "../../../assets/logo.png";
 import {
   Camera, User, Calendar, MapPin, Upload, ChevronDown, Check, Loader2,
 } from "lucide-react";
-import { Dashhboard } from "../icons";
-import { ApiError } from "../lib/api";
+import { Dashhboard } from "@/app/icons";
+import { ApiError } from "../../../lib/api";
 
 const languages = ["English", "French", "Spanish", "Arabic", "Yoruba"];
 const commOptions = ["Chat only", "Email only", "Chat & Email", "Phone & Chat"];
@@ -147,7 +147,7 @@ const TellUsAboutYou: React.FC = () => {
       formData.append("fullName", form.fullName.trim());
       formData.append("dateOfBirth", form.dob);
       formData.append("contactNumber", form.contactNumber.trim());
-      formData.append("countryState", form.country.trim());
+      // formData.append("countryState", form.country.trim());
       formData.append("streetAddress", form.streetAddress.trim());
       formData.append("postalCode", form.postalCode.trim());
       formData.append("describeYourselfInOneLine", form.description.trim());
@@ -155,8 +155,8 @@ const TellUsAboutYou: React.FC = () => {
       formData.append("preferredCommunication", commApiMap[form.communication] || "CHAT_ONLY");
       formData.append("professionalRole", form.professionalRole);
       formData.append("currency", currencyApiMap[form.currency] || "USD");
-      formData.append("rateRangeMin", String(min));
-      formData.append("rateRangeMax", String(max));
+      // formData.append("rateRangeMin", String(min));
+      // formData.append("rateRangeMax", String(max));
       formData.append("rateType", rateTypeApiMap[form.rateType] || "HOURLY");
 
       // Categories — append each ID separately
@@ -165,9 +165,9 @@ const TellUsAboutYou: React.FC = () => {
       });
 
       // Social links — append each link separately
-      form.socialLinks.split(",").map(s => s.trim()).filter(Boolean).forEach((link) => {
-        formData.append("preferredSocialLinks", link);
-      });
+      // form.socialLinks.split(",").map(s => s.trim()).filter(Boolean).forEach((link) => {
+      //   formData.append("preferredSocialLinks", link);
+      // });
 
       // Image — append file directly, no base64 conversion needed
       // ✅ Field name is "image" — change to "file" or "avatar" if backend rejects

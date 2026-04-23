@@ -21,7 +21,7 @@ const UploadIDPage = () => {
   const handleUpload = async () => {
     // Replace with your actual API call
     // await fetch("/api/verify/id", { method: "POST", body: formData });
-    router.push("/verify/pending");
+    router.push("/verification/pending");
   };
 
   return (

@@ -5,7 +5,17 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "i.pravatar.cc" },
+      { protocol: "https", hostname: "ui-avatars.com" },
+      { protocol: "https", hostname: "jubalboard-storage-989615776310-eu-north-1-an.s3.eu-north-1.amazonaws.com", pathname: "/**" },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: "http://16.171.168.144:3000/api/v1/:path*",
+      },
+    ];
   },
 };
 

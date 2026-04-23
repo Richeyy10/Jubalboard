@@ -29,7 +29,7 @@ const ProfileHeader: React.FC<Props> = ({ profile, onEditProfile }) => {
       </div>
 
       {/* Edit Button — full width on mobile */}
-      <Link href={'/client/settings'}>
+      <Link href={'/client/my-profile/edit'}>
         <button
         className="w-full sm:w-auto bg-[#E2554F] border-none rounded-lg px-7 py-2.5 lg:py-3 cursor-pointer text-white font-bold text-sm lg:text-[14px] hover:bg-[#d44a44] transition-colors"
       >

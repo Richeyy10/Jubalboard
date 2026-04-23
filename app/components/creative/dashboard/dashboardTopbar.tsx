@@ -44,13 +44,26 @@ const DashboardTopbar: React.FC<Props> = ({ userName, userAvatar, sidebarOpen, o
 
         <div className="flex items-center gap-2.5 cursor-pointer">
           <Link href="/creative/my-profile">
-            <Image
-              src={userAvatar}
-              alt={userName}
-              width={36}
-              height={36}
-              className="rounded-full object-cover"
-            />
+            {userAvatar.startsWith('data:') ? (
+              <img
+                src={userAvatar}
+                alt={userName}
+                width={36}
+                height={36}
+                className="rounded-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <Image
+                src={userAvatar}
+                alt={userName}
+                width={36}
+                height={36}
+                className="rounded-full object-cover"
+              />
+            )}
           </Link>
           <span className="hidden lg:block text-[14px] font-semibold text-[#1a1a2e]">
             {userName}

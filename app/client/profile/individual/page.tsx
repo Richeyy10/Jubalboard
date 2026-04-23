@@ -1,0 +1,316 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import logo from "../../../assets/logo.png";
+import { Camera, User, ChevronDown, Check, Loader2, BadgeCheck } from "lucide-react";
+
+type Category = { id: string; name: string };
+
+const languages = ["English", "French", "Spanish", "Arabic", "Yoruba"];
+const commOptions = ["Chat only", "Email only", "Phone", "Any"];
+const locationOptions = ["Lagos", "Abuja", "Ibadan", "Port Harcourt", "Kano"];
+
+const commValueMap: Record<string, string> = {
+  "Chat only": "CHAT_ONLY",
+  "Email only": "EMAIL",
+  "Phone": "PHONE",
+  "Any": "ANY",
+};
+
+const languageValueMap: Record<string, string> = {
+  "English": "en", "French": "fr", "Spanish": "es", "Arabic": "ar", "Yoruba": "yo",
+};
+
+const reqStar = <span className="text-[#E2554F]"> *</span>;
+const inputClass = "w-full border border-gray-200 rounded-lg px-3.5 py-[11px] text-[13px] text-black outline-none bg-white box-border";
+const labelClass = "text-[13px] font-semibold text-black block mb-1.5";
+
+const SelectField = ({
+  label, value, onChange, options, placeholder, required,
+}: {
+  label: string; value: string; onChange: (v: string) => void;
+  options: string[]; placeholder?: string; required?: boolean;
+}) => (
+  <div>
+    <label className={labelClass}>{label}{required && reqStar}</label>
+    <div className="relative">
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+      >
+        {placeholder && <option value="">{placeholder}</option>}
+        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+      </select>
+      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+        <ChevronDown size={14} stroke="#6B7280" />
+      </div>
+    </div>
+  </div>
+);
+
+const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="bg-white rounded-2xl px-12 py-10 w-[80%] lg:w-[420px] flex flex-col items-center text-center shadow-2xl">
+      <div className="w-[90px] h-[90px] rounded-full bg-[#2563EB] flex items-center justify-center mb-5">
+        <BadgeCheck size={52} fill="white" stroke="#2563EB" />
+      </div>
+      <h2 className="text-[22px] font-bold text-[#2563EB] m-0 mb-1">Congratulations!</h2>
+      <p className="text-[16px] font-semibold text-[#2563EB] m-0 mb-3">Your profile is complete</p>
+      <p className="text-[14px] text-gray-600 m-0 mb-7 leading-relaxed max-w-[260px]">
+        You can now post projects and connect with the right creatives.
+      </p>
+      <button
+        onClick={onGoToDashboard}
+        className="bg-[#2563EB] border-none rounded-lg px-8 py-2.5 cursor-pointer text-white font-semibold text-[14px] hover:bg-blue-700 transition-colors"
+      >
+        Go to Dashboard
+      </button>
+    </div>
+  </div>
+);
+
+const IndividualProfile: React.FC = () => {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  const [form, setForm] = useState({
+    fullName: "", contactNumber: "",
+    location: "", postalCode: "",
+    streetAddress: "", socialLink: "",
+    communication: "Chat only", language: "English",
+  });
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("/api/v1/categories");
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const list: Category[] = Array.isArray(data) ? data : data.data ?? [];
+        setCategories(list);
+      } catch {
+        // silently fail
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  const update = (key: string, value: string) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const toggleCategory = (id: string) =>
+    setSelectedCategories((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSave = async () => {
+    if (!form.fullName || !form.contactNumber || !form.location || selectedCategories.length === 0) {
+      setError("Please fill in all required fields marked with *");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const tokenRes = await fetch("/api/auth/session/token");
+      if (!tokenRes.ok) throw new Error("Authentication failed. Please log in again.");
+      const { token } = await tokenRes.json();
+      if (!token) throw new Error("Authentication failed. Please log in again.");
+
+      const formData = new FormData();
+      formData.append("fullName", form.fullName);
+      formData.append("contactNumber", form.contactNumber);
+      formData.append("locationCity", form.location);
+      formData.append("postalCode", form.postalCode);
+      formData.append("streetAddress", form.streetAddress);
+      formData.append("preferredSocialLink", form.socialLink);
+      formData.append("preferredCommunication", commValueMap[form.communication]);
+      formData.append("languagePreference", languageValueMap[form.language]);
+      selectedCategories.forEach((id) => formData.append("categoriesOfInterest", id));
+
+      const res = await fetch("/api/v1/clients/me/personal-profile", {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "Failed to save profile.");
+      }
+
+      setShowModal(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An error occurred while saving.";
+      setError(message);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen w-screen pb-5 bg-white font-sans">
+      {showModal && (
+        <CongratulationsModal onGoToDashboard={() => router.push("/client/dashboard")} />
+      )}
+
+      {/* Navbar */}
+      <div className="flex items-center gap-2.5 px-[42px] bg-[#fafafa] h-[100px] border-b border-gray-200">
+        <Image src={logo} alt="Jubal Board logo" width={120} height={120} className="object-contain" />
+      </div>
+
+      <h1 className="text-center text-[28px] font-black font-heading text-black mt-9 mb-1">Build Your Space</h1>
+      <p className="text-center text-[13px] text-black font-body mb-6">
+        Join JubalBoard and start connecting with creatives. Fill out your profile to get started.
+      </p>
+
+      <div className="max-w-[760px] mx-auto mb-[60px] bg-[#fafafa] rounded-2xl px-12 py-10 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        {/* Photo Upload */}
+        <div className="flex flex-col items-center mb-9">
+          <div className="relative mb-2.5">
+            <div className="w-[90px] h-[90px] rounded-full bg-gray-200 overflow-hidden flex items-center justify-center">
+              {photo
+                ? <img src={photo} alt="photo" className="w-full h-full object-cover" />
+                : <User size={48} fill="#1a1a2e" stroke="none" />
+              }
+            </div>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full border-2 border-white cursor-pointer flex items-center justify-center bg-white shadow"
+            >
+              <Camera size={16} stroke="#E2554F" />
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+          </div>
+          <p className="m-0 text-[13px] text-gray-500">Add your photo</p>
+        </div>
+
+        <div className="flex flex-col gap-5">
+
+          {/* Row 1 */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Full Name{reqStar}</label>
+              <input value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Type here" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Contact Number{reqStar}</label>
+              <input value={form.contactNumber} onChange={(e) => update("contactNumber", e.target.value)} placeholder="Type here" className={inputClass} />
+            </div>
+          </div>
+
+          {/* Row 2 */}
+          <div className="grid grid-cols-2 gap-4">
+            <SelectField
+              label="Location/City"
+              value={form.location}
+              onChange={(v) => update("location", v)}
+              options={locationOptions}
+              placeholder="Select your location/city"
+              required
+            />
+            <div>
+              <label className={labelClass}>Postal Code</label>
+              <input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} placeholder="Type here" className={inputClass} />
+            </div>
+          </div>
+
+          {/* Street Address */}
+          <div>
+            <label className={labelClass}>Street Address</label>
+            <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
+          </div>
+
+          {/* Social Link */}
+          <div>
+            <label className={labelClass}>Preferred Social Link</label>
+            <input value={form.socialLink} onChange={(e) => update("socialLink", e.target.value)} placeholder="Type here" className={inputClass} />
+          </div>
+
+          {/* Row 3 */}
+          <div className="grid grid-cols-2 gap-4">
+            <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} required />
+            <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} required />
+          </div>
+
+          {/* Categories */}
+          <div>
+            <label className={labelClass}>Categories of Interest{reqStar}</label>
+            <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
+              {categoriesLoading ? (
+                <div className="flex items-center gap-2 text-[13px] text-gray-400">
+                  <Loader2 size={14} className="animate-spin" /> Loading categories...
+                </div>
+              ) : (
+                categories.map((cat) => {
+                  const selected = selectedCategories.includes(cat.id);
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => toggleCategory(cat.id)}
+                      className={`px-3.5 py-[7px] rounded-md cursor-pointer border text-[13px] flex items-center gap-1.5 transition-all duration-150
+                        ${selected
+                          ? "bg-white border-gray-300 text-black font-medium"
+                          : "bg-white border-gray-300 text-black font-normal"
+                        }`}
+                    >
+                      {selected && <Check size={12} stroke="#1a1a2e" strokeWidth={3} />}
+                      {cat.name}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        {/* Save */}
+        <div className="flex justify-end mt-9">
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="bg-[#E2554F] border-none rounded-lg px-12 py-3.5 cursor-pointer text-white font-bold text-[15px] hover:bg-[#d44a44] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : "Save"}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+export default IndividualProfile;

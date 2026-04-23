@@ -26,10 +26,10 @@ const ActiveCourseBanner: React.FC<Props> = ({ course }) => {
         </span>
         <div className="w-full max-w-md mb-1">
           <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div className="h-full bg-[#E2554F] rounded-full" style={{ width: `${course.progress ?? 60}%` }} />
+            <div className="h-full bg-[#E2554F] rounded-full" style={{ width: `${course.progress ?? 0}%` }} />
           </div>
         </div>
-        <p className="text-xs text-gray-500 mb-4">{course.progress ?? 60}%</p>
+        <p className="text-xs text-gray-500 mb-4">{course.progress ?? 0}%</p>
         <button
           onClick={handleResume}
           className="bg-[#E2554F] hover:bg-red-600 text-white font-body font-semibold px-10 py-2.5 rounded-lg transition-colors text-sm"

@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import logo from "../assets/logo.png";
+import logo from "../../../assets/logo.png";
 import { Camera, User, MapPin, Upload, ChevronDown, Check, BadgeCheck, Loader2 } from "lucide-react";
-import { apiRequest } from "../lib/api";
+import { apiRequest } from "../../../lib/api";
 
 type Category = {
   id: string;

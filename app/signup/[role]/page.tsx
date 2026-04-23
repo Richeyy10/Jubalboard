@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import logo from "../../assets/icononly.png";
-import clientsignup from "../../assets/client/signup.jpg"
+import clientsignup from "../../assets/client/signup.jpg";
+import { registerUser } from "../../lib/authService";
+import { ApiError } from "../../lib/api";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -47,19 +49,71 @@ const SignUp: React.FC = () => {
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const update = (key: string, value: string) =>
+  const update = (key: string, value: string) => {
+    setError(null);
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
-  const handleSubmit = () => {
-    if (!form.name || !form.email || !form.password) return;
-    router.push(`/verify-email?role=${role}&next=${config.nextRoute}`);
+  const roleMap: Record<string, string> = {
+  creative: "CREATIVE",
+  client: "CLIENT",
+};
+
+  const handleSubmit = async () => {
+    // Client-side validation
+    if (!form.name || !form.email || !form.password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    if (form.password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await registerUser({
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        role: roleMap[role] ?? "CREATIVE",
+      });
+
+      // Registration successful — backend sends OTP email
+      // Redirect to verify-email screen with email + next route in query
+      router.push(
+        `/verify-email?email=${encodeURIComponent(form.email)}&role=${role}&next=${encodeURIComponent(config.nextRoute)}`
+      );
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 409) {
+          setError("An account with this email already exists. Try signing in.");
+        } else if (err.status === 422) {
+          setError("Please check your details and try again.");
+        } else {
+          setError(err.message || "Something went wrong. Please try again.");
+        }
+      } else {
+        setError("Unable to connect. Please check your internet connection.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSubmit();
   };
 
   return (
     <div className="flex flex-col lg:flex-row h-screen lg:h-screen w-screen lg:overflow-hidden">
 
-      {/* Left — image (top on mobile, left on desktop) */}
+      {/* Left — image */}
       <div className="hidden lg:block relative w-full h-[220px] sm:h-[280px] lg:flex-1 lg:h-full flex-shrink-0">
         <Image
           src={config.image}
@@ -94,28 +148,41 @@ const SignUp: React.FC = () => {
             Connect. Collaborate. Get it done.
           </p>
 
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
           {/* Fields */}
           <div className="flex flex-col gap-3 mb-2">
             <input
               value={form.name}
               onChange={(e) => update("name", e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Name"
-              className="w-full border border-gray-200 rounded-lg px-3.5 py-3 text-sm text-black outline-none bg-white box-border"
+              disabled={loading}
+              className="w-full border border-gray-200 rounded-lg px-3.5 py-3 text-sm text-black outline-none bg-white box-border disabled:opacity-50"
             />
             <input
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Email Address"
               type="email"
-              className="w-full border border-gray-200 rounded-lg px-3.5 py-3 text-sm text-black outline-none bg-white box-border"
+              disabled={loading}
+              className="w-full border border-gray-200 rounded-lg px-3.5 py-3 text-sm text-black outline-none bg-white box-border disabled:opacity-50"
             />
             <div className="relative">
               <input
                 value={form.password}
                 onChange={(e) => update("password", e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Password"
                 type={showPassword ? "text" : "password"}
-                className="w-full border border-gray-200 rounded-lg px-3.5 py-3 pr-10 text-sm text-black outline-none bg-white box-border"
+                disabled={loading}
+                className="w-full border border-gray-200 rounded-lg px-3.5 py-3 pr-10 text-sm text-black outline-none bg-white box-border disabled:opacity-50"
               />
               <button
                 onClick={() => setShowPassword((p) => !p)}
@@ -135,16 +202,24 @@ const SignUp: React.FC = () => {
           {/* CTA */}
           <button
             onClick={handleSubmit}
-            className="w-full bg-[#E2554F] border-none rounded-lg py-3 lg:py-3.5 cursor-pointer text-white font-bold text-[15px] mb-3 lg:mb-3.5 hover:bg-[#d44a44] transition-colors"
+            disabled={loading}
+            className="w-full bg-[#E2554F] border-none rounded-lg py-3 lg:py-3.5 cursor-pointer text-white font-bold text-[15px] mb-3 lg:mb-3.5 hover:bg-[#d44a44] transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Let's Go
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              "Let's Go"
+            )}
           </button>
 
           {/* Sign in */}
           <p className="text-center text-[13px] text-black mb-4 lg:mb-5">
             Already have an account?{" "}
             <span
-              onClick={() => router.push("/signin/[role]")}
+              onClick={() => router.push(`/signin/${role}`)}
               className="text-[#E2554F] font-semibold cursor-pointer hover:underline"
             >
               Sign in

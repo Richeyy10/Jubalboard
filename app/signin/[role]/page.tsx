@@ -5,7 +5,10 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import logo from "../../assets/icononly.png";
 import clientsigninimg from "../../assets/client/signin.jpg";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { loginUser } from "../../lib/authService";
+import { ApiError } from "../../lib/api";
+import { parseAuthToken, saveSession } from "../../lib/session";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -31,11 +34,13 @@ const FacebookIcon = () => (
 const roleConfig = {
   creative: {
     image: "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&q=80",
-    nextRoute: "/tell-us",
+    nextRoute: "/creative/profile",
+    dashboard: "/creative/dashboard",
   },
   client: {
     image: clientsigninimg,
-    nextRoute: "/brand-profile",
+    nextRoute: "/client/profile",
+    dashboard: "/client/dashboard",
   },
 };
 
@@ -47,133 +52,164 @@ const SignIn: React.FC = () => {
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const update = (key: string, value: string) =>
+  const update = (key: string, value: string) => {
+    setError(null);
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
-  const handleSignIn = () => {
-    if (!form.email || !form.password) return;
-    router.push(config.nextRoute);
+  const handleSignIn = async () => {
+    if (!form.email || !form.password) {
+      setError("Please enter your email and password.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { status, data } = await loginUser(form);
+
+      if (status === 201) {
+        const token = parseAuthToken(data);
+        if (!token) {
+          throw new Error("Login succeeded but no auth token was returned.");
+        }
+        await saveSession(token);
+
+        // ✅ Correct path — user is nested under data.data.user
+        const user = data.data?.user;
+        console.log("profileStatus:", user?.profileStatus);
+        console.log("userType:", user?.userType);
+        if (user) {
+          localStorage.setItem("userData", JSON.stringify(user));
+        }
+
+        // ✅ Always trust userType from API, never the URL param
+        if (user?.profileStatus === "Not Completed") {
+          const onboardingRoute = user?.userType === "CLIENT"
+            ? "/client/profile"
+            : "/creative/profile";
+          router.push(onboardingRoute);
+        } else {
+          const dashboardRoute = user?.userType === "CLIENT"
+            ? "/client/dashboard"
+            : "/creative/dashboard";
+          router.push(dashboardRoute);
+        }
+      } else if (status === 202) {
+        router.push(`/verify-email?email=${encodeURIComponent(form.email)}`);
+      }
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 401) {
+          setError("Incorrect email or password. Please try again.");
+        } else if (err.status === 403) {
+          setError("Your account has been restricted. Please contact support.");
+        } else {
+          setError(err.message || "Something went wrong. Please try again.");
+        }
+      } else {
+        setError(err instanceof Error ? err.message : "Unable to connect. Please check your internet connection.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSignIn();
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen lg:h-screen w-screen lg:overflow-hidden">
-
-      {/* Left — Full height image */}
-      <div className="hidden lg:block relative w-full h-[220px] sm:h-[280px] lg:flex-1 lg:h-full flex-shrink-0">
-        <Image
-          src={config.image}
-          alt="signin background"
-          fill
-          className="object-cover object-center"
-          priority
-        />
+    <div className="flex flex-col lg:flex-row h-screen w-screen lg:overflow-hidden">
+      <div className="hidden lg:block relative lg:flex-1 lg:h-full flex-shrink-0">
+        <Image src={config.image} alt="signin background" fill className="object-cover object-center" priority />
       </div>
 
-      {/* Right — Form panel */}
-      <div className="w-full lg:w-[700px] h-screen lg:flex-shrink-0 flex items-center justify-center px-5 sm:px-8 lg:px-12 py-8 lg:py-10 bg-white overflow-y-auto">
+      <div className="w-full lg:w-[700px] h-screen flex items-center justify-center px-5 sm:px-8 lg:px-12 py-8 lg:py-10 bg-white overflow-y-auto">
         <div className="w-full max-w-[380px]">
-
-          {/* Logo */}
           <div className="flex justify-center mb-4 lg:mb-5">
-            <Image
-              src={logo}
-              alt="Jubal Board logo"
-              width={100}
-              height={100}
-              className="object-contain w-[70px] lg:w-[100px]"
-            />
+            <Image src={logo} alt="Jubal Board logo" width={100} height={100} className="object-contain w-[70px] lg:w-[100px]" />
           </div>
 
-          {/* Heading */}
-          <h1 className="text-xl lg:text-[26px] font-extrabold text-[#1a1a2e] text-center mb-2">
-            Welcome Back!
-          </h1>
+          <h1 className="text-xl lg:text-[26px] font-extrabold text-[#1a1a2e] text-center mb-2">Welcome Back!</h1>
           <p className="text-sm lg:text-base text-black text-center mb-5 lg:mb-7 leading-relaxed">
             Continue creating, connecting, and collaborating.
           </p>
 
-          {/* Fields */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-4 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
           <div className="flex flex-col gap-3 mb-1.5">
             <input
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Email Address"
               type="email"
-              className="w-full border border-gray-200 rounded-lg px-3.5 py-3 text-sm text-black outline-none bg-white box-border"
+              disabled={loading}
+              className="w-full border border-gray-200 rounded-lg px-3.5 py-3 text-sm text-black outline-none bg-white disabled:opacity-50"
             />
             <div className="relative">
               <input
                 value={form.password}
                 onChange={(e) => update("password", e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Password"
                 type={showPassword ? "text" : "password"}
-                className="w-full border border-gray-200 rounded-lg px-3.5 py-3 pr-10 text-sm text-black outline-none bg-white box-border"
+                disabled={loading}
+                className="w-full border border-gray-200 rounded-lg px-3.5 py-3 pr-10 text-sm text-black outline-none bg-white disabled:opacity-50"
               />
-              <button
-                onClick={() => setShowPassword((p) => !p)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-0 flex"
-              >
-                {showPassword
-                  ? <EyeOff size={18} stroke="#9CA3AF" />
-                  : <Eye size={18} stroke="#9CA3AF" />
-                }
+              <button onClick={() => setShowPassword((p) => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none cursor-pointer p-0 flex">
+                {showPassword ? <EyeOff size={18} stroke="#9CA3AF" /> : <Eye size={18} stroke="#9CA3AF" />}
               </button>
             </div>
           </div>
 
-          {/* Forgot password */}
           <div className="text-left mb-5">
-            <span
-              onClick={() => router.push("/forgot-password")}
-              className="text-[13px] text-[#E2554F] font-medium cursor-pointer hover:underline"
-            >
+            <span onClick={() => router.push("/forgot-password")} className="text-[13px] text-[#E2554F] font-medium cursor-pointer hover:underline">
               Forgot Password?
             </span>
           </div>
 
-          {/* Sign in button */}
           <button
             onClick={handleSignIn}
-            className="w-full bg-[#E2554F] border-none rounded-lg py-3 lg:py-3.5 cursor-pointer text-white font-bold text-[15px] mb-3 lg:mb-3.5 hover:bg-[#d44a44] transition-colors"
+            disabled={loading}
+            className="w-full bg-[#E2554F] border-none rounded-lg py-3 lg:py-3.5 cursor-pointer text-white font-bold text-[15px] mb-3 hover:bg-[#d44a44] transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Sign in
+            {loading ? <><Loader2 size={16} className="animate-spin" /> Signing in...</> : "Sign in"}
           </button>
 
-          {/* Create account */}
           <p className="text-center text-[13px] text-black mb-5">
             Don't have an account?{" "}
-            <span
-              onClick={() => router.push("/onboarding")}
-              className="text-[#E2554F] font-semibold cursor-pointer hover:underline"
-            >
+            <span onClick={() => router.push("/onboarding")} className="text-[#E2554F] font-semibold cursor-pointer hover:underline">
               Create one
             </span>
           </p>
 
-          {/* Divider */}
           <div className="flex items-center gap-3 mb-4 lg:mb-5">
             <div className="flex-1 h-px bg-black" />
             <span className="text-[13px] text-black whitespace-nowrap">Or continue with</span>
             <div className="flex-1 h-px bg-black" />
           </div>
 
-          {/* Social buttons */}
           <div className="flex gap-2 lg:gap-2.5 mb-5 lg:mb-6">
             {[
               { icon: <GoogleIcon />, label: "Google" },
               { icon: <AppleIcon />, label: "Apple" },
               { icon: <FacebookIcon />, label: "Facebook" },
             ].map(({ icon, label }) => (
-              <button
-                key={label}
-                className="flex-1 flex items-center justify-center gap-1.5 lg:gap-2 bg-white border border-gray-200 rounded-lg py-2 lg:py-2.5 cursor-pointer text-[12px] lg:text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
+              <button key={label} className="flex-1 flex items-center justify-center gap-1.5 lg:gap-2 bg-white border border-gray-200 rounded-lg py-2 lg:py-2.5 cursor-pointer text-[12px] lg:text-[13px] font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                 {icon} {label}
               </button>
             ))}
           </div>
-
         </div>
       </div>
     </div>

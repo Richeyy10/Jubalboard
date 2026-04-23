@@ -3,50 +3,35 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import logo from "../assets/logo.png";
-import { Camera, User, MapPin, Upload, ChevronDown, Check, BadgeCheck, Loader2 } from "lucide-react";
-import { apiRequest } from "../lib/api";
+import logo from "../../../assets/logo.png";
+import { Camera, User, Upload, ChevronDown, Check, BadgeCheck, Loader2 } from "lucide-react";
 
-type Category = {
-  id: string;
-  name: string;
-};
+type Category = { id: string; name: string };
 
 const industries = ["Technology", "Fashion", "Music", "Film", "Architecture", "Food & Culinary", "Health", "Education"];
 const languages = ["English", "French", "Spanish", "Arabic", "Yoruba"];
 const commOptions = ["Chat only", "Email only", "Phone", "Any"];
-const currencies = ["Dollars ($)", "Euros (€)", "Pounds (£)", "Naira (₦)"];
-const budgetRanges = ["$100-$200", "$200-$500", "$500-$1000", "$1000-$5000", "$5000+"];
+const employeeSizes = ["1-10", "11-50", "51-200", "201-500", "500+"];
 
 const commValueMap: Record<string, string> = {
-  "Chat only": "CHAT_ONLY",
-  "Email only": "EMAIL",
-  "Phone": "PHONE",
-  "Any": "ANY",
+  "Chat only": "CHAT_ONLY", "Email only": "EMAIL", "Phone": "PHONE", "Any": "ANY",
 };
-
 const languageValueMap: Record<string, string> = {
-  "English": "en",
-  "French": "fr",
-  "Spanish": "es",
-  "Arabic": "ar",
-  "Yoruba": "yo",
+  "English": "en", "French": "fr", "Spanish": "es", "Arabic": "ar", "Yoruba": "yo",
 };
 
 const reqStar = <span className="text-[#E2554F]"> *</span>;
 const inputClass = "w-full border border-gray-200 rounded-lg px-3.5 py-[11px] text-[13px] text-black outline-none bg-white box-border";
 const labelClass = "text-[13px] font-semibold text-black block mb-1.5";
 
-// ── Select Field ────────────────────────────────────────────────────────────
 const SelectField = ({
-  label, value, onChange, options, placeholder,
+  label, value, onChange, options, placeholder, required,
 }: {
-  label: string; value: string;
-  onChange: (v: string) => void;
-  options: string[]; placeholder?: string;
+  label: string; value: string; onChange: (v: string) => void;
+  options: string[]; placeholder?: string; required?: boolean;
 }) => (
   <div>
-    <label className={labelClass}>{label}{reqStar}</label>
+    <label className={labelClass}>{label}{required && reqStar}</label>
     <div className="relative">
       <select
         value={value}
@@ -63,7 +48,6 @@ const SelectField = ({
   </div>
 );
 
-// ── Congratulations Modal ───────────────────────────────────────────────────
 const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => (
   <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
     <div className="bg-white rounded-2xl px-12 py-10 w-[80%] lg:w-[420px] flex flex-col items-center text-center shadow-2xl">
@@ -77,7 +61,7 @@ const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoT
       </p>
       <button
         onClick={onGoToDashboard}
-        className="bg-[#2563EB] border-none rounded-lg px-8 py-2.5 cursor-pointer text-white font-semibold text-xs lg:text-[14px] hover:bg-blue-700 transition-colors"
+        className="bg-[#2563EB] border-none rounded-lg px-8 py-2.5 cursor-pointer text-white font-semibold text-[14px] hover:bg-blue-700 transition-colors"
       >
         Go to Dashboard
       </button>
@@ -85,8 +69,7 @@ const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoT
   </div>
 );
 
-// ── Main Page ───────────────────────────────────────────────────────────────
-const BrandProfile: React.FC = () => {
+const BusinessProfile: React.FC = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -94,32 +77,29 @@ const BrandProfile: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // stores IDs
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   const [form, setForm] = useState({
-    businessName: "", contactNumber: "", country: "",
+    businessName: "", contactNumber: "",
+    industry: "", locationCity: "",
     streetAddress: "", websiteLinks: "",
-    registrationNumber: "", taxId: "",
-    description: "", postalCode: "",
-    language: "English", communication: "Chat only",
-    industry: "", currency: "Dollars ($)",
-    budgetRange: "$100-$200",
+    taxId: "", registrationNumber: "",
+    communication: "Chat only", employeeSize: "1-10",
+    language: "English",
   });
 
-  // Fetch real categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await fetch("/api/v1/categories");
-        if (!res.ok) throw new Error("Failed to fetch categories");
+        if (!res.ok) throw new Error();
         const data = await res.json();
-        // data may be the array directly, or nested under data.data etc.
         const list: Category[] = Array.isArray(data) ? data : data.data ?? [];
         setCategories(list);
       } catch {
-        // silently fail — categories just won't render
+        // silently fail
       } finally {
         setCategoriesLoading(false);
       }
@@ -130,7 +110,6 @@ const BrandProfile: React.FC = () => {
   const update = (key: string, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  // toggleCategory now works with IDs
   const toggleCategory = (id: string) =>
     setSelectedCategories((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
@@ -145,13 +124,7 @@ const BrandProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (
-      !form.businessName ||
-      !form.contactNumber ||
-      !form.country ||
-      !form.description ||
-      selectedCategories.length === 0
-    ) {
+    if (!form.businessName || !form.contactNumber || !form.locationCity || selectedCategories.length === 0) {
       setError("Please fill in all required fields marked with *");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -169,7 +142,7 @@ const BrandProfile: React.FC = () => {
       const formData = new FormData();
       formData.append("businessName", form.businessName);
       formData.append("contactNumber", form.contactNumber);
-      formData.append("businessLocationCity", form.country);
+      formData.append("businessLocationCity", form.locationCity);
       formData.append("streetAddress", form.streetAddress);
       formData.append("companyWebsite", form.websiteLinks);
       formData.append("businessRegistrationNumber", form.registrationNumber);
@@ -177,17 +150,12 @@ const BrandProfile: React.FC = () => {
       formData.append("industrySector", form.industry);
       formData.append("preferredCommunication", commValueMap[form.communication]);
       formData.append("languagePreference", languageValueMap[form.language]);
-
-      // Send real category IDs
-      selectedCategories.forEach((id) => {
-        formData.append("categoriesOfInterest", id);
-      });
+      formData.append("businessSizeOfEmployee", form.employeeSize);
+      selectedCategories.forEach((id) => formData.append("categoriesOfInterest", id));
 
       const res = await fetch("/api/v1/clients/me/business-profile", {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
         body: formData,
       });
@@ -218,11 +186,13 @@ const BrandProfile: React.FC = () => {
         <Image src={logo} alt="Jubal Board logo" width={120} height={120} className="object-contain" />
       </div>
 
-      <h1 className="text-center text-[28px] font-black text-[#1a1a2e] mt-9 mb-6">Build Your Space</h1>
+      <h1 className="text-center text-[28px] font-black font-heading text-black mt-9 mb-1">Build Your Business Space</h1>
+      <p className="text-center text-[13px] text-black font-body mb-6">
+        Join JubalBoard and start connecting with creatives. Fill out your profile to get started.
+      </p>
 
       <div className="max-w-[760px] mx-auto mb-[60px] bg-[#fafafa] rounded-2xl px-12 py-10 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
 
-        {/* Error Feedback */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6 text-sm text-red-600">
             {error}
@@ -240,9 +210,9 @@ const BrandProfile: React.FC = () => {
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0.5 right-0.5 w-7 h-7 rounded-full border-2 border-white cursor-pointer flex items-center justify-center bg-white"
+              className="absolute bottom-0.5 right-0.5 w-8 h-8 rounded-full border-2 border-white cursor-pointer flex items-center justify-center bg-white shadow"
             >
-              <Camera size={18} stroke="black" />
+              <Camera size={16} stroke="#E2554F" />
             </button>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogoChange} className="hidden" />
           </div>
@@ -250,101 +220,92 @@ const BrandProfile: React.FC = () => {
         </div>
 
         <div className="flex flex-col gap-5">
-          <div>
-            <label className={labelClass}>Business Name{reqStar}</label>
-            <input value={form.businessName} onChange={(e) => update("businessName", e.target.value)} placeholder="Type here" className={inputClass} />
-          </div>
 
+          {/* Row 1 */}
           <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Business Name{reqStar}</label>
+              <input value={form.businessName} onChange={(e) => update("businessName", e.target.value)} placeholder="Type here" className={inputClass} />
+            </div>
             <div>
               <label className={labelClass}>Contact Number{reqStar}</label>
               <input value={form.contactNumber} onChange={(e) => update("contactNumber", e.target.value)} placeholder="Type here" className={inputClass} />
             </div>
+          </div>
+
+          {/* Row 2 */}
+          <div className="grid grid-cols-2 gap-4">
+            <SelectField label="Industry/Sector" value={form.industry} onChange={(v) => update("industry", v)} options={industries} placeholder="Select your industry/sector" />
             <div>
-              <label className={labelClass}>Country/State{reqStar}</label>
-              <div className="relative">
-                <input value={form.country} onChange={(e) => update("country", e.target.value)} placeholder="Type here" className={`${inputClass} pr-9`} />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><MapPin size={16} stroke="#9CA3AF" /></div>
-              </div>
+              <label className={labelClass}>Business Location City{reqStar}</label>
+              <input value={form.locationCity} onChange={(e) => update("locationCity", e.target.value)} placeholder="Type here" className={inputClass} />
             </div>
           </div>
 
+          {/* Street Address */}
           <div>
-            <label className={labelClass}>Street Address{reqStar}</label>
+            <label className={labelClass}>Street Address</label>
             <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
           </div>
 
+          {/* Website */}
           <div>
-            <label className={labelClass}>Business Website/Social Link(s){reqStar}</label>
+            <label className={labelClass}>Company Website/Social Links</label>
             <input value={form.websiteLinks} onChange={(e) => update("websiteLinks", e.target.value)} placeholder="Type here" className={inputClass} />
           </div>
 
+          {/* Row 3 */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass}>Business Registration Number</label>
-              <input value={form.registrationNumber} onChange={(e) => update("registrationNumber", e.target.value)} placeholder="Type here" className={inputClass} />
-            </div>
             <div>
               <label className={labelClass}>Tax ID</label>
               <input value={form.taxId} onChange={(e) => update("taxId", e.target.value)} placeholder="Type here" className={inputClass} />
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 items-end">
             <div>
-              <label className={labelClass}>Attach Document</label>
-              <button className="flex items-center gap-2 bg-[#E2554F] border-none rounded-lg px-5 py-2.5 cursor-pointer text-white font-semibold text-[13px] hover:bg-[#d44a44] transition-colors">
-                <Upload size={16} stroke="white" /> Upload
-              </button>
+              <label className={labelClass}>Business Registration Number</label>
+              <input value={form.registrationNumber} onChange={(e) => update("registrationNumber", e.target.value)} placeholder="Type here" className={inputClass} />
             </div>
-            <SelectField label="Select your Industry/Sector" value={form.industry} onChange={(v) => update("industry", v)} options={industries} placeholder="Select industry" />
           </div>
 
-          <div>
-            <label className={labelClass}>Describe what makes your brand unique{reqStar}</label>
-            <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={4} className={`${inputClass} resize-y leading-relaxed`} />
-          </div>
-
+          {/* Row 4 */}
           <div className="grid grid-cols-2 gap-4">
+            <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} required />
+            <SelectField label="Business Size of Employee" value={form.employeeSize} onChange={(v) => update("employeeSize", v)} options={employeeSizes} />
+          </div>
+
+          {/* Row 5 — Categories left, Language right */}
+          <div className="grid grid-cols-2 gap-4 items-start">
             <div>
-              <label className={labelClass}>Postal Code</label>
-              <input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} placeholder="Type here" className={inputClass} />
+              <label className={labelClass}>Categories of Interest{reqStar}</label>
+              <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
+                {categoriesLoading ? (
+                  <div className="flex items-center gap-2 text-[13px] text-gray-400">
+                    <Loader2 size={14} className="animate-spin" /> Loading...
+                  </div>
+                ) : (
+                  categories.map((cat) => {
+                    const selected = selectedCategories.includes(cat.id);
+                    return (
+                      <button
+                        key={cat.id}
+                        onClick={() => toggleCategory(cat.id)}
+                        className={`px-3.5 py-[7px] rounded-md cursor-pointer border text-[13px] flex items-center gap-1.5 transition-all duration-150
+                          ${selected ? "bg-white border-gray-400 text-black font-medium" : "bg-white border-gray-200 text-black font-normal"}`}
+                      >
+                        {selected && <Check size={12} stroke="#1a1a2e" strokeWidth={3} />}
+                        {cat.name}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
-            <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} />
+
+            <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} required />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} />
-          </div>
-
-          {/* Categories — now fetched from API */}
-          <div>
-            <label className={labelClass}>Pick Categories where your business shines{reqStar}</label>
-            <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
-              {categoriesLoading ? (
-                <div className="flex items-center gap-2 text-[13px] text-gray-400">
-                  <Loader2 size={14} className="animate-spin" /> Loading categories...
-                </div>
-              ) : (
-                categories.map((cat) => {
-                  const selected = selectedCategories.includes(cat.id);
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => toggleCategory(cat.id)}
-                      className={`px-3.5 py-[7px] rounded-md cursor-pointer border-none text-[13px] flex items-center gap-1.5 transition-all duration-150
-                        ${selected ? "bg-[#1a1a2e] text-white font-semibold" : "bg-gray-100 text-gray-700 font-normal"}`}
-                    >
-                      {selected && <Check size={12} stroke="white" strokeWidth={3} />}
-                      {cat.name}
-                    </button>
-                  );
-                })
-              )}
-            </div>
-          </div>
         </div>
 
+        {/* Save */}
         <div className="flex justify-end mt-9">
           <button
             onClick={handleSave}
@@ -354,9 +315,10 @@ const BrandProfile: React.FC = () => {
             {loading ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : "Save"}
           </button>
         </div>
+
       </div>
     </div>
   );
 };
 
-export default BrandProfile;
+export default BusinessProfile;
