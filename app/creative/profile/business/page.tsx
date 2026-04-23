@@ -169,9 +169,9 @@ const BrandProfile: React.FC = () => {
       const formData = new FormData();
       formData.append("businessName", form.businessName);
       formData.append("contactNumber", form.contactNumber);
-      formData.append("businessLocationCity", form.country);
+      // formData.append("businessLocationCity", form.country);
       formData.append("streetAddress", form.streetAddress);
-      formData.append("companyWebsite", form.websiteLinks);
+      // formData.append("companyWebsite", form.websiteLinks);
       formData.append("businessRegistrationNumber", form.registrationNumber);
       formData.append("taxId", form.taxId);
       formData.append("industrySector", form.industry);
@@ -183,7 +183,7 @@ const BrandProfile: React.FC = () => {
         formData.append("categoriesOfInterest", id);
       });
 
-      const res = await fetch("/api/v1/clients/me/business-profile", {
+      const res = await fetch("/api/v1/creatives/me/business-profile", {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -210,7 +210,7 @@ const BrandProfile: React.FC = () => {
   return (
     <div className="min-h-screen w-screen pb-5 bg-white font-sans">
       {showModal && (
-        <CongratulationsModal onGoToDashboard={() => router.push("/client/dashboard")} />
+        <CongratulationsModal onGoToDashboard={() => router.push("/creative/dashboard")} />
       )}
 
       {/* Navbar */}

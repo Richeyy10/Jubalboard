@@ -30,7 +30,7 @@ const CreativeDashboard: React.FC = () => {
 
   // Fallback values strictly using the backend response
   const userName = profile?.fullName || "Creative";
-  const userAvatar = profile?.avatar || "https://i.pravatar.cc/150?img=47";
+  const userAvatar = profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
 
   return (
     <div className="flex flex-col min-h-screen bg-white">

@@ -25,6 +25,7 @@ export interface CreativeProfileData {
   averageRating: number;
   totalReviews: number;
   jobSuccessRate: number;
+  accountType?: string; // "PERSONAL" | "BUSINESS"
 }
 
 export const useCreativeProfile = () => {
@@ -37,14 +38,12 @@ export const useCreativeProfile = () => {
       setLoading(true);
       setError(null);
 
-      // 1. Get session token
       const tokenRes = await fetch("/api/auth/session/token", {
         credentials: "include",
       });
       const { token } = await tokenRes.json();
       if (!token) throw new Error("No authorization token found.");
 
-      // 2. Single fetch — everything is in /api/v1/creatives/me
       const response = await apiRequest<any>("/api/v1/creatives/me", {
         method: "GET",
         headers: {
@@ -52,56 +51,65 @@ export const useCreativeProfile = () => {
         },
       });
 
-      // 3. Drill into the real data shape from the raw response logs
-      // Structure: response.data.data => { name, creativeProfile, ... }
       const payload = response.data?.data || response.data;
       if (!payload) throw new Error("Empty payload from server.");
 
-      const { name, creativeProfile } = payload;
+      const { name, creativeProfile, creativeBusiness, activeAccountType } = payload;
 
-      // Name
-      const extractedName = creativeProfile?.fullName || name || "Creative";
+      // ✅ Pick the right profile based on accountType
+      const isBusiness = activeAccountType === "BUSINESS";
+      const activeProfile = isBusiness ? creativeBusiness : creativeProfile;
 
-      // Avatar — backend field is imageUrl on creativeProfile
-      const extractedAvatar = creativeProfile?.imageUrl || null;
+      const extractedName = activeProfile?.fullName || 
+                            activeProfile?.businessName || 
+                            name || 
+                            "Creative";
 
-      // Categories — array of strings or { id, name } objects
-      const extractedCategories = (creativeProfile?.categoriesOfInterest || []).map(
+      const extractedAvatar = activeProfile?.imageUrl || 
+                              activeProfile?.logoUrl || 
+                              null;
+
+      const extractedCategories = (activeProfile?.categoriesOfInterest || []).map(
         (cat: any) => (typeof cat === "string" ? cat : cat.name)
       );
 
-      // Portfolio — array of { fileUrl, ... } objects
-      const extractedPortfolio = (creativeProfile?.portfolios || [])
+      const extractedPortfolio = (activeProfile?.portfolios || [])
         .map((p: any) => p.fileUrl)
         .filter(Boolean);
 
-      // Social links — already an array of strings
-      const extractedSocialLinks = (creativeProfile?.preferredSocialLinks || []).filter(Boolean);
+      const extractedSocialLinks = isBusiness
+        ? [activeProfile?.companyWebsite].filter(Boolean)
+        : (activeProfile?.preferredSocialLinks || []).filter(Boolean);
 
       setProfile({
         fullName: extractedName,
         avatar: extractedAvatar,
-        dateOfBirth: creativeProfile?.dateOfBirth || '',
-        contactNumber: creativeProfile?.contactNumber || '',
-        countryState: creativeProfile?.countryState || '',
-        streetAddress: creativeProfile?.streetAddress || '',
-        postalCode: creativeProfile?.postalCode || '',
+        dateOfBirth: activeProfile?.dateOfBirth || '',
+        contactNumber: activeProfile?.contactNumber || '',
+        countryState: activeProfile?.countryState || 
+                      activeProfile?.businessLocationCity || '',
+        streetAddress: activeProfile?.streetAddress || '',
+        postalCode: activeProfile?.postalCode || '',
         preferredSocialLinks: extractedSocialLinks,
-        describeYourselfInOneLine: creativeProfile?.describeYourselfInOneLine || '',
-        languagePreference: creativeProfile?.languagePreference || 'en',
-        preferredCommunication: creativeProfile?.preferredCommunication || 'CHAT_ONLY',
-        professionalRole: creativeProfile?.professionalRole || 'Creative Professional',
+        describeYourselfInOneLine: activeProfile?.describeYourselfInOneLine || 
+                                   activeProfile?.businessName || '',
+        languagePreference: activeProfile?.languagePreference || 'en',
+        preferredCommunication: activeProfile?.preferredCommunication || 'CHAT_ONLY',
+        professionalRole: activeProfile?.professionalRole || 
+                          activeProfile?.industrySector || 
+                          'Creative Professional',
         categoriesOfInterest: extractedCategories,
-        currency: creativeProfile?.currency || 'USD',
-        rateRangeMin: creativeProfile?.rateRangeMin || 0,
-        rateRangeMax: creativeProfile?.rateRangeMax || 0,
-        rateType: creativeProfile?.rateType || 'HOURLY',
+        currency: activeProfile?.currency || 'USD',
+        rateRangeMin: activeProfile?.rateRangeMin || 0,
+        rateRangeMax: activeProfile?.rateRangeMax || 0,
+        rateType: activeProfile?.rateType || 'HOURLY',
         portfolioImages: extractedPortfolio,
-        yearsOfExperience: 0, // not in API response — update if backend adds it
-        completedProjects: creativeProfile?.totalCompletedProjects || 0,
-        averageRating: creativeProfile?.overallRating || 0,
-        totalReviews: creativeProfile?.totalReviews || 0,
-        jobSuccessRate: creativeProfile?.jobSuccessRate || 0,
+        yearsOfExperience: 0,
+        completedProjects: activeProfile?.totalCompletedProjects || 0,
+        averageRating: activeProfile?.overallRating || 0,
+        totalReviews: activeProfile?.totalReviews || 0,
+        jobSuccessRate: activeProfile?.jobSuccessRate || 0,
+        accountType: activeAccountType || 'PERSONAL',
       });
 
     } catch (err) {

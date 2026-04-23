@@ -25,30 +25,22 @@ const MyProfileContent: React.FC<MyProfileContentProps> = ({ profile, loading, e
   // This maps the backend "ugly" names to your "pretty" UI components
   const displayProfile = profile ? {
     name: profile.fullName || "Creative Professional",
-    avatar: profile.avatar || "https://i.pravatar.cc/150?img=47",
+    avatar: profile.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.fullName || "C")}&background=1a1a2e&color=fff&size=128`,
     isOnline: true,
     isVerified: true,
     rating: 5.0,
-    totalReviews: 0, 
+    totalReviews: 0,
     completedProjects: 0,
     jobSuccess: 100,
-    // Mapping the "One Line" description to Bio
     bio: (profile as any).describeYourselfInOneLine || "No bio available",
-    
-    // Mapping categoriesOfInterest to Skills
     skills: (profile as any).categoriesOfInterest?.map((cat: any) => cat.name || cat) || [],
-    
-    // Mapping professionalRole and rates to Services
     services: [
       (profile as any).professionalRole || "Creative Professional",
       (profile as any).rateType ? `${(profile as any).currency || '$'}${(profile as any).rateRangeMin}-${(profile as any).rateRangeMax} (${(profile as any).rateType})` : ""
     ].filter(Boolean),
-    
-    yearsOfExperience: 0, 
+    yearsOfExperience: 0,
     totalClients: 0,
-    portfolioImages: [], 
-    
-    // Mapping Social Links array
+    portfolioImages: [],
     socialLinks: (profile as any).preferredSocialLinks || [],
   } : creativeProfile;
 

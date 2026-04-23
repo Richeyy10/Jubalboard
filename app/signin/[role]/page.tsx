@@ -93,6 +93,7 @@ const SignIn: React.FC = () => {
             ? "/client/profile"
             : "/creative/profile";
           router.push(onboardingRoute);
+          console.log("Full user object:", JSON.stringify(user, null, 2));
         } else {
           const dashboardRoute = user?.userType === "CLIENT"
             ? "/client/dashboard"
