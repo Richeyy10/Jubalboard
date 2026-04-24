@@ -19,17 +19,32 @@ const commApiMap: Record<string, string> = {
 const rateTypeApiMap: Record<string, string> = {
   "Hourly": "HOURLY", "Project-Based": "PROJECT_BASED", "Retainer": "BOTH", "Per Deliverable": "PROJECT_BASED",
 };
-const currencyApiMap: Record<string, string> = {
-  "Dollars ($)": "USD", "Euros (€)": "EUR", "Pounds (£)": "GBP", "Naira (₦)": "NGN",
-};
 const languageApiMap: Record<string, string> = {
   "English": "en", "French": "fr", "Spanish": "es", "Arabic": "ar", "Yoruba": "yo",
 };
 
 const roles = ["Graphic Designer", "Photographer", "Videographer", "Illustrator", "3D Artist", "Content Creator"];
-const currencies = ["Dollars ($)", "Euros (€)", "Pounds (£)", "Naira (₦)"];
 const budgetRanges = ["$100-$200", "$200-$500", "$500-$1000", "$1000-$5000", "$5000+"];
 const rateTypes = ["Hourly", "Project-Based", "Retainer", "Per Deliverable"];
+
+interface StateOption {
+  id: string;
+  name: string;
+}
+interface CountryOption {
+  id: string;
+  name: string;
+  code: string;
+  phoneCode: string;
+  states: StateOption[];
+}
+// --- NEW ---
+interface CurrencyOption {
+  id: string;
+  code: string;
+  symbol: string;
+  isActive: boolean;
+}
 
 const parseBudgetRange = (range: string): { min: number; max: number } => {
   const cleaned = range.replace(/\$/g, "");
@@ -83,6 +98,7 @@ const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoT
 const TellUsAboutYou: React.FC = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const projectFilesRef = useRef<HTMLInputElement>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -90,10 +106,22 @@ const TellUsAboutYou: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [phoneCode, setPhoneCode] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [descTouched, setDescTouched] = useState(false);
+  const [projectFiles, setProjectFiles] = useState<File[]>([]);
+
+  // --- NEW ---
+  const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("");
+
   const [form, setForm] = useState({
-    fullName: "", dob: "", contactNumber: "", country: "", streetAddress: "", socialLinks: "",
+    fullName: "", dob: "", country: "", streetAddress: "", socialLinks: "",
     description: "", postalCode: "", language: "English", communication: "Chat only",
-    professionalRole: "Graphic Designer", currency: "Dollars ($)", budgetRange: "$100-$200", rateType: "Hourly",
+    professionalRole: "Graphic Designer", budgetRange: "$100-$200", rateType: "Hourly",
   });
 
   const update = (key: string, value: string) => {
@@ -101,6 +129,47 @@ const TellUsAboutYou: React.FC = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  // fetch countries
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const response = await fetch(`${BASE_URL}/api/v1/platform/countries`, { credentials: "include" });
+        if (response.ok) {
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data?.countries) {
+            setCountries(apiResponse.data.countries);
+          }
+        }
+      } catch (e) {
+        console.warn("Countries could not be loaded.");
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // --- NEW: fetch currencies ---
+  useEffect(() => {
+    const fetchCurrencies = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const response = await fetch(`${BASE_URL}/api/v1/platform/currencies`, { credentials: "include" });
+        if (response.ok) {
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data?.currencies) {
+            const active = apiResponse.data.currencies.filter((c: CurrencyOption) => c.isActive);
+            setCurrencies(active);
+            if (active.length > 0) setSelectedCurrency(active[0].code);
+          }
+        }
+      } catch (e) {
+        console.warn("Currencies could not be loaded.");
+      }
+    };
+    fetchCurrencies();
+  }, []);
+
+  // fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -119,6 +188,14 @@ const TellUsAboutYou: React.FC = () => {
     fetchCategories();
   }, []);
 
+  const handleCountryChange = (countryName: string) => {
+    const found = countries.find((c) => c.name === countryName) || null;
+    setSelectedCountry(found);
+    setSelectedState("");
+    setPhoneCode(found ? `+${found.phoneCode}` : "");
+    update("country", countryName);
+  };
+
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -127,10 +204,30 @@ const TellUsAboutYou: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleProjectFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    setProjectFiles((prev) => {
+      const existing = prev.map((f) => f.name);
+      const newFiles = files.filter((f) => !existing.includes(f.name));
+      return [...prev, ...newFiles];
+    });
+    e.target.value = ""; // reset so same file can be re-added if removed
+  };
+
+  const removeProjectFile = (name: string) => {
+    setProjectFiles((prev) => prev.filter((f) => f.name !== name));
+  };
+
   const handleSave = async () => {
     if (!form.fullName.trim()) { setError("Full name is required."); return; }
     if (!form.professionalRole) { setError("Professional role is required."); return; }
     if (!form.rateType) { setError("Rate type is required."); return; }
+    if (form.description.trim().length < 50) {
+      setDescTouched(true);
+      setError("Your bio must be at least 50 characters.");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -142,35 +239,28 @@ const TellUsAboutYou: React.FC = () => {
 
       const { min, max } = parseBudgetRange(form.budgetRange);
 
-      // Single multipart/form-data request — includes all fields + image
       const formData = new FormData();
       formData.append("fullName", form.fullName.trim());
       formData.append("dateOfBirth", form.dob);
-      formData.append("contactNumber", form.contactNumber.trim());
-      // formData.append("countryState", form.country.trim());
+      formData.append("contactNumber", phoneNumber ? `${phoneCode}${phoneNumber}` : "");
       formData.append("streetAddress", form.streetAddress.trim());
       formData.append("postalCode", form.postalCode.trim());
       formData.append("describeYourselfInOneLine", form.description.trim());
       formData.append("languagePreference", languageApiMap[form.language] || "en");
       formData.append("preferredCommunication", commApiMap[form.communication] || "CHAT_ONLY");
       formData.append("professionalRole", form.professionalRole);
-      formData.append("currency", currencyApiMap[form.currency] || "USD");
-      // formData.append("rateRangeMin", String(min));
-      // formData.append("rateRangeMax", String(max));
+      // --- CHANGED: send selectedCurrency code directly ---
+      formData.append("currency", selectedCurrency);
       formData.append("rateType", rateTypeApiMap[form.rateType] || "HOURLY");
 
-      // Categories — append each ID separately
       selectedCategories.forEach((id) => {
         formData.append("categoriesOfInterest", id);
       });
 
-      // Social links — append each link separately
-      // form.socialLinks.split(",").map(s => s.trim()).filter(Boolean).forEach((link) => {
-      //   formData.append("preferredSocialLinks", link);
-      // });
+      projectFiles.forEach((file) => {
+        formData.append("projectFiles", file);
+      });
 
-      // Image — append file directly, no base64 conversion needed
-      // ✅ Field name is "image" — change to "file" or "avatar" if backend rejects
       const avatarFile = fileInputRef.current?.files?.[0];
       if (avatarFile) {
         formData.append("image", avatarFile);
@@ -180,7 +270,6 @@ const TellUsAboutYou: React.FC = () => {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
-          // ✅ Do NOT set Content-Type — browser sets it automatically with boundary
         },
         body: formData,
         credentials: "include",
@@ -191,7 +280,6 @@ const TellUsAboutYou: React.FC = () => {
         throw new Error(errData.message || "Failed to save profile.");
       }
 
-      // Update profileStatus in localStorage so routing works correctly
       const userData = localStorage.getItem("userData");
       if (userData) {
         const parsed = JSON.parse(userData);
@@ -255,8 +343,30 @@ const TellUsAboutYou: React.FC = () => {
             <div>
               <label className={labelClass}>Date of Birth{reqStar}</label>
               <div className="relative">
-                <input type="date" value={form.dob} onChange={(e) => update("dob", e.target.value)} className={`${inputClass} pr-9`} />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><Calendar size={16} stroke="#9CA3AF" /></div>
+                <input
+                  type="date"
+                  value={form.dob}
+                  max={(() => {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() - 18);
+                    return d.toISOString().split("T")[0];
+                  })()}
+                  onChange={(e) => {
+                    const selected = new Date(e.target.value);
+                    const minAge = new Date();
+                    minAge.setFullYear(minAge.getFullYear() - 18);
+                    if (selected > minAge) {
+                      setError("You must be at least 18 years old.");
+                      update("dob", "");
+                    } else {
+                      update("dob", e.target.value);
+                    }
+                  }}
+                  className={`${inputClass} pr-9`}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <Calendar size={16} stroke="#9CA3AF" />
+                </div>
               </div>
             </div>
           </div>
@@ -264,16 +374,65 @@ const TellUsAboutYou: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Contact Number{reqStar}</label>
-              <input value={form.contactNumber} onChange={(e) => update("contactNumber", e.target.value)} placeholder="Type here" className={inputClass} />
+              <div className={`${inputClass} flex items-center gap-0 p-0 overflow-hidden`}>
+                {phoneCode && (
+                  <span className="px-3 py-[1px] text-[13px] text-black border-r border-gray-200 flex-shrink-0 select-none">
+                    {phoneCode}
+                  </span>
+                )}
+                <input
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, ""); // digits only
+                    setPhoneNumber(val);
+                  }}
+                  placeholder="8012345678"
+                  inputMode="numeric"
+                  className="flex-1 px-3 py-[1px] text-[13px] text-black outline-none bg-white border-none"
+                />
+              </div>
             </div>
+
             <div>
-              <label className={labelClass}>Country/State{reqStar}</label>
+              <label className={labelClass}>Country{reqStar}</label>
               <div className="relative">
-                <input value={form.country} onChange={(e) => update("country", e.target.value)} placeholder="Type here" className={`${inputClass} pr-9`} />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><MapPin size={16} stroke="#9CA3AF" /></div>
+                <select
+                  value={form.country}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select country</option>
+                  {countries.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
               </div>
             </div>
           </div>
+
+          {selectedCountry && selectedCountry.states.length > 0 && (
+            <div>
+              <label className={labelClass}>State{reqStar}</label>
+              <div className="relative">
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select state</option>
+                  {selectedCountry.states.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className={labelClass}>Street Address{reqStar}</label>
@@ -286,8 +445,32 @@ const TellUsAboutYou: React.FC = () => {
           </div>
 
           <div>
-            <label className={labelClass}>Describe yourself in one line{reqStar}</label>
-            <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={4} className={`${inputClass} resize-y leading-relaxed`} />
+            <label className={labelClass}>Describe yourself briefly{reqStar}</label>
+            <div className="relative">
+              <textarea
+                value={form.description}
+                onChange={(e) => update("description", e.target.value)}
+                onBlur={() => setDescTouched(true)}
+                rows={4}
+                placeholder="Tell clients who you are, what you do, and what makes you unique..."
+                className={`${inputClass} resize-y leading-relaxed pr-2 ${descTouched && form.description.trim().length < 50
+                  ? "border-red-400 focus:border-red-400"
+                  : ""
+                  }`}
+              />
+              <div className={`text-right text-[11px] mt-1 ${form.description.trim().length < 50
+                ? "text-red-400"
+                : "text-green-500"
+                }`}>
+                {form.description.trim().length}/50 min
+                {form.description.trim().length >= 50 && " ✓"}
+              </div>
+            </div>
+            {descTouched && form.description.trim().length < 50 && (
+              <p className="text-red-400 text-[11px] mt-1">
+                Please write at least 50 characters ({50 - form.description.trim().length} more to go)
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -306,11 +489,72 @@ const TellUsAboutYou: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 items-end">
             <div>
               <label className={labelClass}>Show off your best projects{reqStar}</label>
-              <button className="flex items-center gap-2 bg-[#E2554F] border-none rounded-lg px-5 py-2.5 cursor-pointer text-white font-semibold text-[13px] hover:bg-[#d44a44] transition-colors">
+              <button
+                type="button"
+                onClick={() => projectFilesRef.current?.click()}
+                className="flex items-center gap-2 bg-[#E2554F] border-none rounded-lg px-5 py-2.5 cursor-pointer text-white font-semibold text-[13px] hover:bg-[#d44a44] transition-colors"
+              >
                 <Upload size={16} stroke="white" /> Upload
               </button>
+              <input
+                ref={projectFilesRef}
+                type="file"
+                accept="image/*,video/*,.pdf,.doc,.docx"
+                multiple
+                onChange={handleProjectFilesChange}
+                className="hidden"
+              />
+
+              {projectFiles.length > 0 && (
+                <div className="mt-3 flex flex-col gap-2">
+                  {projectFiles.map((file) => (
+                    <div
+                      key={file.name}
+                      className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-gray-500 uppercase">
+                          {file.name.split(".").pop()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[12px] font-medium text-gray-800 truncate max-w-[220px]">{file.name}</p>
+                          <p className="text-[11px] text-gray-400">{(file.size / 1024).toFixed(1)} KB</p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeProjectFile(file.name)}
+                        className="text-gray-400 hover:text-red-400 transition-colors text-lg leading-none ml-3 flex-shrink-0"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-            <SelectField label="Select your currency" value={form.currency} onChange={(v: string) => update("currency", v)} options={currencies} />
+
+            {/* --- CHANGED: Currency dropdown from API --- */}
+            <div>
+              <label className={labelClass}>Select your currency{reqStar}</label>
+              <div className="relative">
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select currency</option>
+                  {currencies.map((c) => (
+                    <option key={c.id} value={c.code}>
+                      {c.code} ({c.symbol})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -318,7 +562,6 @@ const TellUsAboutYou: React.FC = () => {
             <SelectField label="Select your rate" value={form.rateType} onChange={(v: string) => update("rateType", v)} options={rateTypes} placeholder="Hourly, Project-Based..." />
           </div>
 
-          {/* Categories */}
           {availableCategories.length > 0 && (
             <div>
               <label className={labelClass}>Pick your categories</label>

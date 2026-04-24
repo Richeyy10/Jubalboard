@@ -8,6 +8,25 @@ import { Camera, User, Upload, ChevronDown, Check, BadgeCheck, Loader2 } from "l
 
 type Category = { id: string; name: string };
 
+interface StateOption {
+  id: string;
+  name: string;
+}
+interface CountryOption {
+  id: string;
+  name: string;
+  code: string;
+  phoneCode: string;
+  states: StateOption[];
+}
+// --- NEW ---
+interface CurrencyOption {
+  id: string;
+  code: string;
+  symbol: string;
+  isActive: boolean;
+}
+
 const industries = ["Technology", "Fashion", "Music", "Film", "Architecture", "Food & Culinary", "Health", "Education"];
 const languages = ["English", "French", "Spanish", "Arabic", "Yoruba"];
 const commOptions = ["Chat only", "Email only", "Phone", "Any"];
@@ -81,8 +100,14 @@ const BusinessProfile: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [phoneCode, setPhoneCode] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+
   const [form, setForm] = useState({
-    businessName: "", contactNumber: "",
+    businessName: "", contactNumber: "", country: "",
     industry: "", locationCity: "",
     streetAddress: "", websiteLinks: "",
     taxId: "", registrationNumber: "",
@@ -107,6 +132,25 @@ const BusinessProfile: React.FC = () => {
     fetchCategories();
   }, []);
 
+  // fetch countries
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const response = await fetch(`${BASE_URL}/api/v1/platform/countries`, { credentials: "include" });
+        if (response.ok) {
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data?.countries) {
+            setCountries(apiResponse.data.countries);
+          }
+        }
+      } catch (e) {
+        console.warn("Countries could not be loaded.");
+      }
+    };
+    fetchCountries();
+  }, []);
+
   const update = (key: string, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -121,6 +165,14 @@ const BusinessProfile: React.FC = () => {
     const reader = new FileReader();
     reader.onload = () => setBrandLogo(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const handleCountryChange = (countryName: string) => {
+    const found = countries.find((c) => c.name === countryName) || null;
+    setSelectedCountry(found);
+    setSelectedState("");
+    setPhoneCode(found ? `+${found.phoneCode}` : "");
+    update("country", countryName);
   };
 
   const handleSave = async () => {
@@ -237,9 +289,44 @@ const BusinessProfile: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <SelectField label="Industry/Sector" value={form.industry} onChange={(v) => update("industry", v)} options={industries} placeholder="Select your industry/sector" />
             <div>
-              <label className={labelClass}>Business Location City{reqStar}</label>
-              <input value={form.locationCity} onChange={(e) => update("locationCity", e.target.value)} placeholder="Type here" className={inputClass} />
+              <label className={labelClass}>Country{reqStar}</label>
+              <div className="relative">
+                <select
+                  value={form.country}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select country</option>
+                  {countries.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
+              </div>
             </div>
+
+            {selectedCountry && selectedCountry.states.length > 0 && (
+              <div>
+                <label className={labelClass}>State{reqStar}</label>
+                <div className="relative">
+                  <select
+                    value={selectedState}
+                    onChange={(e) => setSelectedState(e.target.value)}
+                    className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                  >
+                    <option value="" disabled>Select state</option>
+                    {selectedCountry.states.map((s) => (
+                      <option key={s.id} value={s.name}>{s.name}</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <ChevronDown size={14} stroke="#6B7280" />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Street Address */}

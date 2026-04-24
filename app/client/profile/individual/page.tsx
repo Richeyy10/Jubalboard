@@ -8,9 +8,27 @@ import { Camera, User, ChevronDown, Check, Loader2, BadgeCheck } from "lucide-re
 
 type Category = { id: string; name: string };
 
+interface StateOption {
+  id: string;
+  name: string;
+}
+interface CountryOption {
+  id: string;
+  name: string;
+  code: string;
+  phoneCode: string;
+  states: StateOption[];
+}
+// --- NEW ---
+interface CurrencyOption {
+  id: string;
+  code: string;
+  symbol: string;
+  isActive: boolean;
+}
+
 const languages = ["English", "French", "Spanish", "Arabic", "Yoruba"];
 const commOptions = ["Chat only", "Email only", "Phone", "Any"];
-const locationOptions = ["Lagos", "Abuja", "Ibadan", "Port Harcourt", "Kano"];
 
 const commValueMap: Record<string, string> = {
   "Chat only": "CHAT_ONLY",
@@ -84,12 +102,66 @@ const IndividualProfile: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [phoneCode, setPhoneCode] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [descTouched, setDescTouched] = useState(false);
+  const [projectFiles, setProjectFiles] = useState<File[]>([]);
+
+  // --- NEW ---
+  const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("");
+
   const [form, setForm] = useState({
-    fullName: "", contactNumber: "",
+    fullName: "", contactNumber: "", country: "",
     location: "", postalCode: "",
     streetAddress: "", socialLink: "",
     communication: "Chat only", language: "English",
   });
+
+
+  // fetch countries
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const response = await fetch(`${BASE_URL}/api/v1/platform/countries`, { credentials: "include" });
+        if (response.ok) {
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data?.countries) {
+            setCountries(apiResponse.data.countries);
+          }
+        }
+      } catch (e) {
+        console.warn("Countries could not be loaded.");
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // --- NEW: fetch currencies ---
+  useEffect(() => {
+    const fetchCurrencies = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const response = await fetch(`${BASE_URL}/api/v1/platform/currencies`, { credentials: "include" });
+        if (response.ok) {
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data?.currencies) {
+            const active = apiResponse.data.currencies.filter((c: CurrencyOption) => c.isActive);
+            setCurrencies(active);
+            if (active.length > 0) setSelectedCurrency(active[0].code);
+          }
+        }
+      } catch (e) {
+        console.warn("Currencies could not be loaded.");
+      }
+    };
+    fetchCurrencies();
+  }, []);
+
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -122,6 +194,14 @@ const IndividualProfile: React.FC = () => {
     const reader = new FileReader();
     reader.onload = () => setPhoto(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const handleCountryChange = (countryName: string) => {
+    const found = countries.find((c) => c.name === countryName) || null;
+    setSelectedCountry(found);
+    setSelectedState("");
+    setPhoneCode(found ? `+${found.phoneCode}` : "");
+    update("country", countryName);
   };
 
   const handleSave = async () => {
@@ -227,89 +307,135 @@ const IndividualProfile: React.FC = () => {
             </div>
             <div>
               <label className={labelClass}>Contact Number{reqStar}</label>
-              <input value={form.contactNumber} onChange={(e) => update("contactNumber", e.target.value)} placeholder="Type here" className={inputClass} />
+              <div className={`${inputClass} flex items-center gap-0 p-0 overflow-hidden`}>
+                {phoneCode && (
+                  <span className="px-3 py-[1px] text-[13px] text-black border-r border-gray-200 flex-shrink-0 select-none">
+                    {phoneCode}
+                  </span>
+                )}
+                <input
+                  value={phoneNumber}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, ""); // digits only
+                    setPhoneNumber(val);
+                  }}
+                  placeholder="8012345678"
+                  inputMode="numeric"
+                  className="flex-1 px-3 py-[1px] text-[13px] text-black outline-none bg-white border-none"
+                />
+              </div>
             </div>
           </div>
 
           {/* Row 2 */}
-          <div className="grid grid-cols-2 gap-4">
-            <SelectField
-              label="Location/City"
-              value={form.location}
-              onChange={(v) => update("location", v)}
-              options={locationOptions}
-              placeholder="Select your location/city"
-              required
-            />
-            <div>
-              <label className={labelClass}>Postal Code</label>
-              <input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} placeholder="Type here" className={inputClass} />
+          <div>
+            <label className={labelClass}>Country{reqStar}</label>
+            <div className="relative">
+              <select
+                value={form.country}
+                onChange={(e) => handleCountryChange(e.target.value)}
+                className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+              >
+                <option value="" disabled>Select country</option>
+                {countries.map((c) => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <ChevronDown size={14} stroke="#6B7280" />
+              </div>
             </div>
           </div>
 
-          {/* Street Address */}
+        {selectedCountry && selectedCountry.states.length > 0 && (
           <div>
-            <label className={labelClass}>Street Address</label>
-            <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
-          </div>
-
-          {/* Social Link */}
-          <div>
-            <label className={labelClass}>Preferred Social Link</label>
-            <input value={form.socialLink} onChange={(e) => update("socialLink", e.target.value)} placeholder="Type here" className={inputClass} />
-          </div>
-
-          {/* Row 3 */}
-          <div className="grid grid-cols-2 gap-4">
-            <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} required />
-            <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} required />
-          </div>
-
-          {/* Categories */}
-          <div>
-            <label className={labelClass}>Categories of Interest{reqStar}</label>
-            <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
-              {categoriesLoading ? (
-                <div className="flex items-center gap-2 text-[13px] text-gray-400">
-                  <Loader2 size={14} className="animate-spin" /> Loading categories...
-                </div>
-              ) : (
-                categories.map((cat) => {
-                  const selected = selectedCategories.includes(cat.id);
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => toggleCategory(cat.id)}
-                      className={`px-3.5 py-[7px] rounded-md cursor-pointer border text-[13px] flex items-center gap-1.5 transition-all duration-150
-                        ${selected
-                          ? "bg-white border-gray-300 text-black font-medium"
-                          : "bg-white border-gray-300 text-black font-normal"
-                        }`}
-                    >
-                      {selected && <Check size={12} stroke="#1a1a2e" strokeWidth={3} />}
-                      {cat.name}
-                    </button>
-                  );
-                })
-              )}
+            <label className={labelClass}>State{reqStar}</label>
+            <div className="relative">
+              <select
+                value={selectedState}
+                onChange={(e) => setSelectedState(e.target.value)}
+                className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+              >
+                <option value="" disabled>Select state</option>
+                {selectedCountry.states.map((s) => (
+                  <option key={s.id} value={s.name}>{s.name}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <ChevronDown size={14} stroke="#6B7280" />
+              </div>
             </div>
           </div>
-
+        )}
+        
+        <div>
+          <label className={labelClass}>Postal Code</label>
+          <input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} placeholder="Type here" className={inputClass} />
         </div>
-
-        {/* Save */}
-        <div className="flex justify-end mt-9">
-          <button
-            onClick={handleSave}
-            disabled={loading}
-            className="bg-[#E2554F] border-none rounded-lg px-12 py-3.5 cursor-pointer text-white font-bold text-[15px] hover:bg-[#d44a44] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {loading ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : "Save"}
-          </button>
-        </div>
-
       </div>
+
+      {/* Street Address */}
+      <div>
+        <label className={labelClass}>Street Address</label>
+        <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
+      </div>
+
+      {/* Social Link */}
+      <div>
+        <label className={labelClass}>Preferred Social Link</label>
+        <input value={form.socialLink} onChange={(e) => update("socialLink", e.target.value)} placeholder="Type here" className={inputClass} />
+      </div>
+
+      {/* Row 3 */}
+      <div className="grid grid-cols-2 gap-4">
+        <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} required />
+        <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} required />
+      </div>
+
+      {/* Categories */}
+      <div>
+        <label className={labelClass}>Categories of Interest{reqStar}</label>
+        <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
+          {categoriesLoading ? (
+            <div className="flex items-center gap-2 text-[13px] text-gray-400">
+              <Loader2 size={14} className="animate-spin" /> Loading categories...
+            </div>
+          ) : (
+            categories.map((cat) => {
+              const selected = selectedCategories.includes(cat.id);
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => toggleCategory(cat.id)}
+                  className={`px-3.5 py-[7px] rounded-md cursor-pointer border text-[13px] flex items-center gap-1.5 transition-all duration-150
+                        ${selected
+                      ? "bg-white border-gray-300 text-black font-medium"
+                      : "bg-white border-gray-300 text-black font-normal"
+                    }`}
+                >
+                  {selected && <Check size={12} stroke="#1a1a2e" strokeWidth={3} />}
+                  {cat.name}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+
     </div>
+
+        {/* Save */ }
+  <div className="flex justify-end mt-9">
+    <button
+      onClick={handleSave}
+      disabled={loading}
+      className="bg-[#E2554F] border-none rounded-lg px-12 py-3.5 cursor-pointer text-white font-bold text-[15px] hover:bg-[#d44a44] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+    >
+      {loading ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : "Save"}
+    </button>
+  </div>
+
+      </div >
   );
 };
 

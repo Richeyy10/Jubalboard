@@ -24,12 +24,6 @@ const rateTypeApiMap: Record<string, string> = {
 const rateTypeReverseMap: Record<string, string> = {
   "HOURLY": "Hourly", "PROJECT_BASED": "Project-Based", "BOTH": "Retainer",
 };
-const currencyApiMap: Record<string, string> = {
-  "Dollars ($)": "USD", "Euros (€)": "EUR", "Pounds (£)": "GBP", "Naira (₦)": "NGN",
-};
-const currencyReverseMap: Record<string, string> = {
-  "USD": "Dollars ($)", "EUR": "Euros (€)", "GBP": "Pounds (£)", "NGN": "Naira (₦)",
-};
 const languageApiMap: Record<string, string> = {
   "English": "en", "French": "fr", "Spanish": "es", "Arabic": "ar", "Yoruba": "yo",
 };
@@ -38,8 +32,25 @@ const languageReverseMap: Record<string, string> = {
 };
 
 const roles = ["Graphic Designer", "Photographer", "Videographer", "Illustrator", "3D Artist", "Content Creator"];
-const currencies = ["Dollars ($)", "Euros (€)", "Pounds (£)", "Naira (₦)"];
 const rateTypes = ["Hourly", "Project-Based", "Retainer", "Per Deliverable"];
+
+interface StateOption {
+  id: string;
+  name: string;
+}
+interface CountryOption {
+  id: string;
+  name: string;
+  code: string;
+  phoneCode: string;
+  states: StateOption[];
+}
+interface CurrencyOption {
+  id: string;
+  code: string;
+  symbol: string;
+  isActive: boolean;
+}
 
 const reqStar = <span className="text-[#E2554F]"> *</span>;
 const inputClass = "w-full border border-gray-200 rounded-lg px-3.5 py-[11px] text-[13px] text-black outline-none bg-white box-border";
@@ -76,11 +87,22 @@ const EditProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Country / state
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [phoneCode, setPhoneCode] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+
+  // Currencies from API
+  const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("");
+
   const [form, setForm] = useState({
-    fullName: "", dob: "", contactNumber: "", country: "", streetAddress: "",
+    fullName: "", dob: "", country: "", streetAddress: "",
     socialLinks: "", description: "", postalCode: "",
     language: "English", communication: "Chat only",
-    professionalRole: "Graphic Designer", currency: "Dollars ($)",
+    professionalRole: "Graphic Designer",
     rateRangeMin: "0", rateRangeMax: "0", rateType: "Hourly",
   });
 
@@ -89,7 +111,69 @@ const EditProfile: React.FC = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Fetch countries
   useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const response = await fetch(`${BASE_URL}/api/v1/platform/countries`, { credentials: "include" });
+        if (response.ok) {
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data?.countries) {
+            setCountries(apiResponse.data.countries);
+          }
+        }
+      } catch {
+        console.warn("Countries could not be loaded.");
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // Fetch currencies
+  useEffect(() => {
+    const fetchCurrencies = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const response = await fetch(`${BASE_URL}/api/v1/platform/currencies`, { credentials: "include" });
+        if (response.ok) {
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data?.currencies) {
+            const active = apiResponse.data.currencies.filter((c: CurrencyOption) => c.isActive);
+            setCurrencies(active);
+            if (active.length > 0) setSelectedCurrency(active[0].code);
+          }
+        }
+      } catch {
+        console.warn("Currencies could not be loaded.");
+      }
+    };
+    fetchCurrencies();
+  }, []);
+
+  // Fetch categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const res = await fetch(`${BASE_URL}/api/v1/categories`, { credentials: "include" });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            setAvailableCategories(json.data.map((cat: any) => ({ id: cat.id, name: cat.name })));
+          }
+        }
+      } catch {
+        console.warn("Categories could not be loaded.");
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Load existing profile — runs after countries are loaded so we can match country object
+  useEffect(() => {
+    if (countries.length === 0) return; // wait for countries first
+
     const loadProfile = async () => {
       try {
         setFetching(true);
@@ -108,10 +192,36 @@ const EditProfile: React.FC = () => {
         const cp = payload?.creativeProfile;
 
         if (cp) {
+          // Match country by name from API
+          const matchedCountry = countries.find((c) => c.name === cp.countryState) || null;
+          setSelectedCountry(matchedCountry);
+
+          // Pre-fill phone code and number
+          if (matchedCountry) {
+            setPhoneCode(`+${matchedCountry.phoneCode}`);
+          }
+          if (cp.contactNumber) {
+            // Strip phone code prefix if present
+            const code = matchedCountry ? `+${matchedCountry.phoneCode}` : "";
+            const stripped = code && cp.contactNumber.startsWith(code)
+              ? cp.contactNumber.slice(code.length)
+              : cp.contactNumber;
+            setPhoneNumber(stripped);
+          }
+
+          // Pre-fill state if the country has states
+          if (matchedCountry && cp.state) {
+            setSelectedState(cp.state);
+          }
+
+          // Pre-fill currency
+          if (cp.currency) {
+            setSelectedCurrency(cp.currency);
+          }
+
           setForm({
             fullName: cp.fullName || "",
             dob: cp.dateOfBirth ? cp.dateOfBirth.split("T")[0] : "",
-            contactNumber: cp.contactNumber || "",
             country: cp.countryState || "",
             streetAddress: cp.streetAddress || "",
             socialLinks: (cp.preferredSocialLinks || []).join(", "),
@@ -120,7 +230,6 @@ const EditProfile: React.FC = () => {
             language: languageReverseMap[cp.languagePreference] || "English",
             communication: commReverseMap[cp.preferredCommunication] || "Chat only",
             professionalRole: cp.professionalRole || "Graphic Designer",
-            currency: currencyReverseMap[cp.currency] || "Dollars ($)",
             rateRangeMin: String(cp.rateRangeMin || 0),
             rateRangeMax: String(cp.rateRangeMax || 0),
             rateType: rateTypeReverseMap[cp.rateType] || "Hourly",
@@ -140,24 +249,16 @@ const EditProfile: React.FC = () => {
       }
     };
 
-    const loadCategories = async () => {
-      try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
-        const res = await fetch(`${BASE_URL}/api/v1/categories`, { credentials: "include" });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && Array.isArray(json.data)) {
-            setAvailableCategories(json.data.map((cat: any) => ({ id: cat.id, name: cat.name })));
-          }
-        }
-      } catch {
-        console.warn("Categories could not be loaded.");
-      }
-    };
-
     loadProfile();
-    loadCategories();
-  }, []);
+  }, [countries]); // re-runs once countries are ready
+
+  const handleCountryChange = (countryName: string) => {
+    const found = countries.find((c) => c.name === countryName) || null;
+    setSelectedCountry(found);
+    setSelectedState("");
+    setPhoneCode(found ? `+${found.phoneCode}` : "");
+    update("country", countryName);
+  };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -178,16 +279,14 @@ const EditProfile: React.FC = () => {
     try {
       const tokenRes = await fetch("/api/auth/session/token");
       const { token } = await tokenRes.json();
-      const rateMin = parseFloat(form.rateRangeMin);
-      const rateMax = parseFloat(form.rateRangeMax);
       if (!token) throw new Error("Unauthorized");
 
       const formData = new FormData();
 
       if (form.fullName.trim()) formData.append("fullName", form.fullName.trim());
       if (form.dob) formData.append("dateOfBirth", form.dob);
-      if (form.contactNumber.trim()) formData.append("contactNumber", form.contactNumber.trim());
-      if (form.country.trim()) formData.append("countryState", form.country.trim());
+      if (phoneNumber) formData.append("contactNumber", `${phoneCode}${phoneNumber}`);
+      if (form.country.trim()) formData.append("country", form.country.trim());
       if (form.streetAddress.trim()) formData.append("streetAddress", form.streetAddress.trim());
       if (form.postalCode.trim()) formData.append("postalCode", form.postalCode.trim());
       if (form.description.trim()) formData.append("describeYourselfInOneLine", form.description.trim());
@@ -195,19 +294,9 @@ const EditProfile: React.FC = () => {
       formData.append("languagePreference", languageApiMap[form.language] || "en");
       formData.append("preferredCommunication", commApiMap[form.communication] || "CHAT_ONLY");
       formData.append("professionalRole", form.professionalRole);
-      formData.append("currency", currencyApiMap[form.currency] || "USD");
-      // formData.append("rateRangeMin", String(Number(form.rateRangeMin) || 0));
-      // formData.append("rateRangeMax", String(Number(form.rateRangeMax) || 0));
+      formData.append("currency", selectedCurrency);
       formData.append("rateType", rateTypeApiMap[form.rateType] || "HOURLY");
 
-      // Only append if user actually entered something
-      // const socialLinksArray = form.socialLinks.split(",").map((s) => s.trim()).filter(Boolean);
-      // socialLinksArray.forEach((link) => formData.append("preferredSocialLinks", link));
-
-      // // Only append if user selected categories
-      // selectedCategories.forEach((id) => formData.append("categoriesOfInterest", id));
-
-      // Only append image if user picked a new one
       const avatarFile = fileInputRef.current?.files?.[0];
       if (avatarFile) formData.append("image", avatarFile);
 
@@ -217,11 +306,6 @@ const EditProfile: React.FC = () => {
         body: formData,
         credentials: "include",
       });
-
-      console.log("FormData entries:");
-      for (const [key, value] of formData.entries()) {
-        console.log(`  ${key}:`, value);
-      }
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
@@ -301,33 +385,109 @@ const EditProfile: React.FC = () => {
         </div>
 
         <div className="flex flex-col gap-5">
+          {/* Row 1: Full Name + DOB */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Full Name{reqStar}</label>
-              <input value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Type here" className={inputClass} />
+              <input
+                value={form.fullName}
+                onChange={(e) => update("fullName", e.target.value)}
+                placeholder="Type here"
+                className={inputClass}
+              />
             </div>
             <div>
               <label className={labelClass}>Date of Birth</label>
               <div className="relative">
-                <input type="date" value={form.dob} onChange={(e) => update("dob", e.target.value)} className={`${inputClass} pr-9`} />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><Calendar size={16} stroke="#9CA3AF" /></div>
+                <input
+                  type="date"
+                  value={form.dob}
+                  max={(() => {
+                    const d = new Date();
+                    d.setFullYear(d.getFullYear() - 18);
+                    return d.toISOString().split("T")[0];
+                  })()}
+                  onChange={(e) => {
+                    const selected = new Date(e.target.value);
+                    const minAge = new Date();
+                    minAge.setFullYear(minAge.getFullYear() - 18);
+                    if (selected > minAge) {
+                      setError("You must be at least 18 years old.");
+                      update("dob", "");
+                    } else {
+                      update("dob", e.target.value);
+                    }
+                  }}
+                  className={`${inputClass} pr-9`}
+                />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <Calendar size={16} stroke="#9CA3AF" />
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Row 2: Contact Number + Country */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Contact Number</label>
-              <input value={form.contactNumber} onChange={(e) => update("contactNumber", e.target.value)} placeholder="Type here" className={inputClass} />
+              <div className={`${inputClass} flex items-center gap-0 p-0 overflow-hidden`}>
+                {phoneCode && (
+                  <span className="px-3 py-[1px] text-[13px] text-black border-r border-gray-200 flex-shrink-0 select-none">
+                    {phoneCode}
+                  </span>
+                )}
+                <input
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="8012345678"
+                  inputMode="numeric"
+                  className="flex-1 px-3 py-[1px] text-[13px] text-black outline-none bg-white border-none"
+                />
+              </div>
             </div>
+
             <div>
-              <label className={labelClass}>Country/State</label>
+              <label className={labelClass}>Country</label>
               <div className="relative">
-                <input value={form.country} onChange={(e) => update("country", e.target.value)} placeholder="Type here" className={`${inputClass} pr-9`} />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><MapPin size={16} stroke="#9CA3AF" /></div>
+                <select
+                  value={form.country}
+                  onChange={(e) => handleCountryChange(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select country</option>
+                  {countries.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
               </div>
             </div>
           </div>
+
+          {/* State dropdown — only shown when country has states */}
+          {selectedCountry && selectedCountry.states.length > 0 && (
+            <div>
+              <label className={labelClass}>State</label>
+              <div className="relative">
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select state</option>
+                  {selectedCountry.states.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label className={labelClass}>Street Address</label>
@@ -341,7 +501,26 @@ const EditProfile: React.FC = () => {
 
           <div>
             <label className={labelClass}>Describe yourself in one line</label>
-            <textarea value={form.description} onChange={(e) => update("description", e.target.value)} rows={4} className={`${inputClass} resize-y leading-relaxed`} />
+            <div className="relative">
+              <textarea
+                value={form.description}
+                onChange={(e) => {
+                  if (e.target.value.length <= 150) {
+                    update("description", e.target.value);
+                  }
+                }}
+                rows={4}
+                maxLength={150}
+                placeholder="Tell clients who you are, what you do, and what makes you unique..."
+                className={`${inputClass} resize-y leading-relaxed`}
+              />
+              <div className={`text-right text-[11px] mt-1 ${form.description.length > 130
+                  ? "text-red-400"
+                  : "text-gray-400"
+                }`}>
+                {form.description.length}/150
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -357,8 +536,28 @@ const EditProfile: React.FC = () => {
             <SelectField label="Professional Role" value={form.professionalRole} onChange={(v: string) => update("professionalRole", v)} options={roles} required={false} />
           </div>
 
+          {/* Currency from API + Rate Type */}
           <div className="grid grid-cols-2 gap-4">
-            <SelectField label="Currency" value={form.currency} onChange={(v: string) => update("currency", v)} options={currencies} required={false} />
+            <div>
+              <label className={labelClass}>Currency</label>
+              <div className="relative">
+                <select
+                  value={selectedCurrency}
+                  onChange={(e) => setSelectedCurrency(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select currency</option>
+                  {currencies.map((c) => (
+                    <option key={c.id} value={c.code}>
+                      {c.code} ({c.symbol})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
+              </div>
+            </div>
             <SelectField label="Rate Type" value={form.rateType} onChange={(v: string) => update("rateType", v)} options={rateTypes} required={false} />
           </div>
 

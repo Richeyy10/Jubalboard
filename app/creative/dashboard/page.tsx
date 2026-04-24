@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { X, Loader2 } from "lucide-react"; // Added Loader icon
+import { useEffect, useState } from "react";
+import { X, Loader2 } from "lucide-react";
 import Sidebar from "@/app/components/creative/dashboard/sideBar";
 import DashboardTopbar from "@/app/components/creative/dashboard/dashboardTopbar";
 import UpdateBanner from "@/app/components/creative/dashboard/updateBanner";
@@ -14,13 +14,22 @@ import LearningHub from "@/app/components/creative/dashboard/learningHub";
 import QuickActions from "@/app/components/creative/dashboard/quickActions";
 import { useCreativeProfile } from "@/app/lib/hooks/useCreativeProfile";
 import { freshGigs, todoItems, ongoingGigs, creativePitches, courses } from "../../data";
+import { useKycStatus } from "../../lib/hooks/useKycStatus";
+import KycModal from "../../components/verification/kycModal";
 
 const CreativeDashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { profile, loading, error } = useCreativeProfile();
+  const { profile, loading: profileLoading, error } = useCreativeProfile();
+  const { kycStatus, loading: kycLoading } = useKycStatus();
+  const [showKycModal, setShowKycModal] = useState(false);
 
-  // If the backend is still thinking, show a clean loading screen
-  if (loading) {
+  useEffect(() => {
+    if (!kycLoading && kycStatus !== "PROVIDER_APPROVED") {
+      setShowKycModal(true);
+    }
+  }, [kycStatus, kycLoading]);
+
+  if (profileLoading || kycLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-white">
         <Loader2 className="animate-spin text-[#E2554F]" size={40} />
@@ -28,9 +37,10 @@ const CreativeDashboard: React.FC = () => {
     );
   }
 
-  // Fallback values strictly using the backend response
   const userName = profile?.fullName || "Creative";
-  const userAvatar = profile?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
+  const userAvatar =
+    profile?.avatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -40,8 +50,14 @@ const CreativeDashboard: React.FC = () => {
         sidebarOpen={sidebarOpen}
         onMenuClick={() => setSidebarOpen(!sidebarOpen)}
       />
-
       <div className="flex flex-1 relative">
+        {showKycModal && (
+          <KycModal
+            status={kycStatus}
+            onClose={() => setShowKycModal(false)}
+          />
+        )}
+
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/40 z-30 lg:hidden"

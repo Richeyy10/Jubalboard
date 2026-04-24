@@ -20,7 +20,7 @@ interface MyProfileContentProps {
 const MyProfileContent: React.FC<MyProfileContentProps> = ({ profile, loading, error }) => {
 
   const router = useRouter();
-  
+
   // 1. DATA MAPPING LOGIC
   // This maps the backend "ugly" names to your "pretty" UI components
   const displayProfile = profile ? {
@@ -33,7 +33,10 @@ const MyProfileContent: React.FC<MyProfileContentProps> = ({ profile, loading, e
     completedProjects: 0,
     jobSuccess: 100,
     bio: (profile as any).describeYourselfInOneLine || "No bio available",
-    skills: (profile as any).categoriesOfInterest?.map((cat: any) => cat.name || cat) || [],
+    skills: (profile as any).categoriesOfInterest?.map((cat: any) => {
+      if (typeof cat === "string") return cat; // plain string ID — nothing to map
+      return cat.name || cat.categoryName || cat.title || cat.label || "";
+    }).filter(Boolean) || [],
     services: [
       (profile as any).professionalRole || "Creative Professional",
       (profile as any).rateType ? `${(profile as any).currency || '$'}${(profile as any).rateRangeMin}-${(profile as any).rateRangeMax} (${(profile as any).rateType})` : ""
@@ -57,7 +60,7 @@ const MyProfileContent: React.FC<MyProfileContentProps> = ({ profile, loading, e
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <p className="text-red-500 font-medium mb-4">Offline: {error}</p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="px-6 py-2 bg-gray-100 rounded-lg text-sm font-semibold"
         >
@@ -79,24 +82,24 @@ const MyProfileContent: React.FC<MyProfileContentProps> = ({ profile, loading, e
 
       <div className="flex flex-col gap-5">
         <ProfileHeader profile={displayProfile} />
-        
+
         {/* Only show sections if data exists to keep it clean */}
         <ProfileAbout bio={displayProfile.bio} />
-        
-        {displayProfile.skills.length > 0 && (
+
+        {/* {displayProfile.skills.length > 0 && (
           <ProfileSkills skills={displayProfile.skills} />
-        )}
-        
+        )} */}
+
         <ProfileServices services={displayProfile.services} />
-        
+
         <ProfileStats
           yearsOfExperience={displayProfile.yearsOfExperience}
           totalClients={displayProfile.totalClients}
           totalReviews={displayProfile.totalReviews}
         />
-        
+
         <ProfilePortfolio images={displayProfile.portfolioImages} />
-        
+
         {displayProfile.socialLinks.length > 0 && (
           <ProfileSocialLinks links={displayProfile.socialLinks} />
         )}

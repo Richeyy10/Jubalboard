@@ -5,18 +5,18 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import logo from "../../../assets/logo.png";
 import {
-  Camera, User, MapPin, ChevronDown, Check, Loader2, ArrowLeft,
+  Camera, User, ChevronDown, Check, Loader2, ArrowLeft,
 } from "lucide-react";
 import { ApiError } from "../../../lib/api";
 
 const languages = ["English", "French", "Spanish", "Arabic", "Yoruba"];
-const commOptions = ["Chat only", "Email only", "Chat & Email", "Phone & Chat"];
+const commOptions = ["Chat only", "Email only", "Phone", "Any"];
 
 const commApiMap: Record<string, string> = {
-  "Chat only": "CHAT_ONLY", "Email only": "EMAIL", "Chat & Email": "ANY", "Phone & Chat": "ANY",
+  "Chat only": "CHAT_ONLY", "Email only": "EMAIL", "Phone": "PHONE", "Any": "ANY",
 };
 const commReverseMap: Record<string, string> = {
-  "CHAT_ONLY": "Chat only", "EMAIL": "Email only", "ANY": "Chat & Email",
+  "CHAT_ONLY": "Chat only", "EMAIL": "Email only", "PHONE": "Phone", "ANY": "Any",
 };
 const languageApiMap: Record<string, string> = {
   "English": "en", "French": "fr", "Spanish": "es", "Arabic": "ar", "Yoruba": "yo",
@@ -24,6 +24,18 @@ const languageApiMap: Record<string, string> = {
 const languageReverseMap: Record<string, string> = {
   "en": "English", "fr": "French", "es": "Spanish", "ar": "Arabic", "yo": "Yoruba",
 };
+
+interface StateOption {
+  id: string;
+  name: string;
+}
+interface CountryOption {
+  id: string;
+  name: string;
+  code: string;
+  phoneCode: string;
+  states: StateOption[];
+}
 
 const reqStar = <span className="text-[#E2554F]"> *</span>;
 const inputClass = "w-full border border-gray-200 rounded-lg px-3.5 py-[11px] text-[13px] text-black outline-none bg-white box-border";
@@ -60,9 +72,16 @@ const EditClientProfile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  // Country / state
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(null);
+  const [selectedState, setSelectedState] = useState<string>("");
+  const [phoneCode, setPhoneCode] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+
   const [form, setForm] = useState({
     fullName: "",
-    contactNumber: "",
+    country: "",
     locationCity: "",
     streetAddress: "",
     postalCode: "",
@@ -76,7 +95,48 @@ const EditClientProfile: React.FC = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Fetch countries
   useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const response = await fetch(`${BASE_URL}/api/v1/platform/countries`, { credentials: "include" });
+        if (response.ok) {
+          const apiResponse = await response.json();
+          if (apiResponse.success && apiResponse.data?.countries) {
+            setCountries(apiResponse.data.countries);
+          }
+        }
+      } catch {
+        console.warn("Countries could not be loaded.");
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // Fetch categories
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
+        const res = await fetch(`${BASE_URL}/api/v1/categories`, { credentials: "include" });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data)) {
+            setAvailableCategories(json.data.map((cat: any) => ({ id: cat.id, name: cat.name })));
+          }
+        }
+      } catch {
+        console.warn("Categories could not be loaded.");
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // Load profile — waits for countries so we can match country object for phone code + state
+  useEffect(() => {
+    if (countries.length === 0) return;
+
     const loadProfile = async () => {
       try {
         setFetching(true);
@@ -94,9 +154,32 @@ const EditClientProfile: React.FC = () => {
         const cp = json.data?.clientProfile;
 
         if (cp) {
+          // Match saved country name against fetched countries list
+          const matchedCountry = countries.find((c) => c.name === cp.country) || null;
+          setSelectedCountry(matchedCountry);
+
+          // Pre-fill phone code
+          if (matchedCountry) {
+            setPhoneCode(`+${matchedCountry.phoneCode}`);
+          }
+
+          // Strip phone code prefix from saved contact number
+          if (cp.contactNumber) {
+            const code = matchedCountry ? `+${matchedCountry.phoneCode}` : "";
+            const stripped = code && cp.contactNumber.startsWith(code)
+              ? cp.contactNumber.slice(code.length)
+              : cp.contactNumber;
+            setPhoneNumber(stripped);
+          }
+
+          // Pre-fill state
+          if (matchedCountry && cp.state) {
+            setSelectedState(cp.state);
+          }
+
           setForm({
             fullName: cp.fullName || "",
-            contactNumber: cp.contactNumber || "",
+            country: cp.country || "",
             locationCity: cp.locationCity || "",
             streetAddress: cp.streetAddress || "",
             postalCode: cp.postalCode || "",
@@ -119,24 +202,16 @@ const EditClientProfile: React.FC = () => {
       }
     };
 
-    const loadCategories = async () => {
-      try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
-        const res = await fetch(`${BASE_URL}/api/v1/categories`, { credentials: "include" });
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && Array.isArray(json.data)) {
-            setAvailableCategories(json.data.map((cat: any) => ({ id: cat.id, name: cat.name })));
-          }
-        }
-      } catch {
-        console.warn("Categories could not be loaded.");
-      }
-    };
-
     loadProfile();
-    loadCategories();
-  }, []);
+  }, [countries]);
+
+  const handleCountryChange = (countryName: string) => {
+    const found = countries.find((c) => c.name === countryName) || null;
+    setSelectedCountry(found);
+    setSelectedState("");
+    setPhoneCode(found ? `+${found.phoneCode}` : "");
+    update("country", countryName);
+  };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -161,7 +236,7 @@ const EditClientProfile: React.FC = () => {
       const formData = new FormData();
 
       if (form.fullName.trim()) formData.append("fullName", form.fullName.trim());
-      if (form.contactNumber.trim()) formData.append("contactNumber", form.contactNumber.trim());
+      if (phoneNumber) formData.append("contactNumber", `${phoneCode}${phoneNumber}`);
       if (form.locationCity.trim()) formData.append("locationCity", form.locationCity.trim());
       if (form.streetAddress.trim()) formData.append("streetAddress", form.streetAddress.trim());
       if (form.postalCode.trim()) formData.append("postalCode", form.postalCode.trim());
@@ -181,13 +256,11 @@ const EditClientProfile: React.FC = () => {
       });
 
       const saveResponse = await res.json();
-      console.log("Save response:", JSON.stringify(saveResponse, null, 2));
 
       if (!res.ok) {
         throw new Error(saveResponse.message || "Failed to save profile.");
       }
 
-      // Try to grab updated imageUrl from response if backend returns it
       const updatedImageUrl =
         saveResponse.data?.clientProfile?.imageUrl ||
         saveResponse.data?.imageUrl ||
@@ -197,7 +270,6 @@ const EditClientProfile: React.FC = () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
 
       setTimeout(() => {
-        // Pass the updated image URL as a query param so profile page can use it immediately
         if (updatedImageUrl) {
           router.push(`/client/my-profile?avatar=${encodeURIComponent(updatedImageUrl)}`);
         } else {
@@ -276,49 +348,138 @@ const EditClientProfile: React.FC = () => {
 
         <div className="flex flex-col gap-5">
 
-          {/* Row 1 */}
+          {/* Row 1: Full Name + Contact Number */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Full Name{reqStar}</label>
-              <input value={form.fullName} onChange={(e) => update("fullName", e.target.value)} placeholder="Type here" className={inputClass} />
+              <input
+                value={form.fullName}
+                onChange={(e) => update("fullName", e.target.value)}
+                placeholder="Type here"
+                className={inputClass}
+              />
             </div>
             <div>
               <label className={labelClass}>Contact Number</label>
-              <input value={form.contactNumber} onChange={(e) => update("contactNumber", e.target.value)} placeholder="Type here" className={inputClass} />
+              <div className={`${inputClass} flex items-center gap-0 p-0 overflow-hidden`}>
+                {phoneCode && (
+                  <span className="px-3 py-[1px] text-[13px] text-black border-r border-gray-200 flex-shrink-0 select-none">
+                    {phoneCode}
+                  </span>
+                )}
+                <input
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="8012345678"
+                  inputMode="numeric"
+                  className="flex-1 px-3 py-[11px] text-[13px] text-black outline-none bg-white border-none"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Row 2 */}
+          {/* Country dropdown */}
+          <div>
+            <label className={labelClass}>Country</label>
+            <div className="relative">
+              <select
+                value={form.country}
+                onChange={(e) => handleCountryChange(e.target.value)}
+                className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+              >
+                <option value="" disabled>Select country</option>
+                {countries.map((c) => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                <ChevronDown size={14} stroke="#6B7280" />
+              </div>
+            </div>
+          </div>
+
+          {/* State dropdown — only when country has states */}
+          {selectedCountry && selectedCountry.states.length > 0 && (
+            <div>
+              <label className={labelClass}>State</label>
+              <div className="relative">
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select state</option>
+                  {selectedCountry.states.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Location City + Postal Code */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Location/City</label>
-              <div className="relative">
-                <input value={form.locationCity} onChange={(e) => update("locationCity", e.target.value)} placeholder="Type here" className={`${inputClass} pr-9`} />
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"><MapPin size={16} stroke="#9CA3AF" /></div>
-              </div>
+              <input
+                value={form.locationCity}
+                onChange={(e) => update("locationCity", e.target.value)}
+                placeholder="Type here"
+                className={inputClass}
+              />
             </div>
             <div>
               <label className={labelClass}>Postal Code</label>
-              <input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} placeholder="Type here" className={inputClass} />
+              <input
+                value={form.postalCode}
+                onChange={(e) => update("postalCode", e.target.value)}
+                placeholder="Type here"
+                className={inputClass}
+              />
             </div>
           </div>
 
           {/* Street Address */}
           <div>
             <label className={labelClass}>Street Address</label>
-            <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
+            <input
+              value={form.streetAddress}
+              onChange={(e) => update("streetAddress", e.target.value)}
+              placeholder="Type your street address"
+              className={inputClass}
+            />
           </div>
 
           {/* Social Link */}
           <div>
             <label className={labelClass}>Preferred Social Link</label>
-            <input value={form.socialLink} onChange={(e) => update("socialLink", e.target.value)} placeholder="Type here" className={inputClass} />
+            <input
+              value={form.socialLink}
+              onChange={(e) => update("socialLink", e.target.value)}
+              placeholder="Type here"
+              className={inputClass}
+            />
           </div>
 
-          {/* Row 3 */}
+          {/* Communication + Language */}
           <div className="grid grid-cols-2 gap-4">
-            <SelectField label="Preferred Communication" value={form.communication} onChange={(v: string) => update("communication", v)} options={commOptions} required={false} />
-            <SelectField label="Language Preference" value={form.language} onChange={(v: string) => update("language", v)} options={languages} required={false} />
+            <SelectField
+              label="Preferred Communication"
+              value={form.communication}
+              onChange={(v: string) => update("communication", v)}
+              options={commOptions}
+              required={false}
+            />
+            <SelectField
+              label="Language Preference"
+              value={form.language}
+              onChange={(v: string) => update("language", v)}
+              options={languages}
+              required={false}
+            />
           </div>
 
           {/* Categories */}

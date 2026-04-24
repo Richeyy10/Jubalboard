@@ -6,22 +6,38 @@ export class ApiError extends Error {
 
 export async function apiRequest<T = unknown>(
   path: string,
-  options?: RequestInit
+  options?: RequestInit,
+  timeoutMs = 10000 // 10 seconds max
 ): Promise<{ status: number; data: T }> {
-  const res = await fetch(path, {
-    credentials: "include",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options?.headers ?? {}),
-    },
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  const data = await res.json();
+  try {
+    const res = await fetch(path, {
+      credentials: "include",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options?.headers ?? {}),
+      },
+      signal: controller.signal,
+    });
 
-  if (!res.ok) {
-    throw new ApiError(res.status, data);
+    clearTimeout(timeoutId);
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new ApiError(res.status, data);
+    }
+
+    return { status: res.status, data };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+
+    if (err.name === "AbortError") {
+      throw new ApiError(408, { message: "Request timed out. Please try again." });
+    }
+
+    throw err;
   }
-
-  return { status: res.status, data };
 }
