@@ -13,6 +13,8 @@ import IncomingPitches from "@/app/components/client/dashboard/incomingPitches";
 import { suggestedCreatives, services, activeProjects, incomingPitches } from "../../data";
 import { useState, useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
+import { useKycStatus } from "../../lib/hooks/useKycStatus";
+import KycModal from "../../components/verification/kycModal";
 
 type ClientProfile = {
   name: string;
@@ -35,6 +37,14 @@ const ClientDashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const { kycStatus, loading: kycLoading } = useKycStatus();
+  const [showKycModal, setShowKycModal] = useState(false);
+
+  useEffect(() => {
+    if (!kycLoading && kycStatus !== null && kycStatus === "UNVERIFIED") {
+      setShowKycModal(true);
+    }
+  }, [kycStatus, kycLoading]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -53,7 +63,7 @@ const ClientDashboard: React.FC = () => {
         const json = await res.json();
         setProfile(json.data);
       } catch {
-        // fail silently — dashboard still loads without profile
+        // fail silently
       } finally {
         setLoading(false);
       }
@@ -62,7 +72,7 @@ const ClientDashboard: React.FC = () => {
     fetchProfile();
   }, []);
 
-  if (loading) {
+  if (loading || kycLoading) {
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-white">
         <Loader2 className="animate-spin text-[#2563EB] mb-4" size={48} />
@@ -72,7 +82,8 @@ const ClientDashboard: React.FC = () => {
   }
 
   const userName = profile?.clientProfile?.fullName || profile?.name || "Client";
-  const userAvatar = profile?.clientProfile?.imageUrl ||
+  const userAvatar =
+    profile?.clientProfile?.imageUrl ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
 
   return (
@@ -85,6 +96,13 @@ const ClientDashboard: React.FC = () => {
       />
 
       <div className="flex flex-1 relative">
+        {showKycModal && (
+          <KycModal
+            status={kycStatus}
+            onClose={() => setShowKycModal(false)}
+          />
+        )}
+
         {sidebarOpen && (
           <div
             className="fixed inset-0 bg-black/40 z-30 lg:hidden"

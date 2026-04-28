@@ -68,7 +68,24 @@ const BriefPreviewContent: React.FC = () => {
             <div className="bg-gray-50 rounded-2xl p-6 flex flex-col gap-5">
                 <PreviewRow label="Job Title" value={form.jobTitle} />
                 <PreviewRow label="Project Category" value={form.projectCategory} />
-                <PreviewRow label="Specific Skill(s)" value={form.specificSkills} />
+                {/* Skills */}
+                <div>
+                    <p className="text-md font-heading font-bold text-black">Specific Skill(s)</p>
+                    {form.specificSkillNames.length > 0 ? (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {form.specificSkillNames.map((name) => (
+                                <span
+                                    key={name}
+                                    className="px-3 py-1 rounded-full text-sm font-medium bg-[#E05C5C] text-white"
+                                >
+                                    {name}
+                                </span>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-black mt-1">—</p>
+                    )}
+                </div>
                 <PreviewRow label="Job Description" value={form.jobDescription} />
                 <PreviewRow label="Set your Budget" value={form.budgetRange} />
                 <PreviewRow label="Timeline" value={form.timeline} />

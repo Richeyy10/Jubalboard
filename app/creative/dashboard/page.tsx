@@ -24,10 +24,10 @@ const CreativeDashboard: React.FC = () => {
   const [showKycModal, setShowKycModal] = useState(false);
 
   useEffect(() => {
-    if (!kycLoading && kycStatus !== "PROVIDER_APPROVED") {
-      setShowKycModal(true);
-    }
-  }, [kycStatus, kycLoading]);
+  if (!kycLoading && kycStatus !== null && kycStatus === "UNVERIFIED") {
+    setShowKycModal(true);
+  }
+}, [kycStatus, kycLoading]);
 
   if (profileLoading || kycLoading) {
     return (
@@ -92,7 +92,7 @@ const CreativeDashboard: React.FC = () => {
           <WelcomeBar userName={userName} />
           <SearchBar />
           <QuickActions />
-          <FreshGigs gigs={freshGigs} />
+          <FreshGigs />
           <TodoList todos={todoItems} />
           <OngoingGigs gigs={ongoingGigs} />
           <YourPitches pitches={creativePitches} />

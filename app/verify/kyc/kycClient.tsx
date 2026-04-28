@@ -46,7 +46,8 @@ const KycClient = () => {
           : [];
 
         const existing = list.find((d: any) => d.contextType === contextType) ?? null;
-        const isDeclined = existing?.status === "DECLINED";
+        const isDeclined = existing?.verificationStatus === "DECLINED";
+        const isUnverified = !existing || existing.verificationStatus === "UNVERIFIED";
         const statusFailed = !statusRes.ok;
 
         let sdkToken: string | null = null;
@@ -64,9 +65,9 @@ const KycClient = () => {
           const data = await res.json();
           sdkToken = data?.data?.sdkToken ?? data?.sdkToken ?? null;
 
-        } else if (existing || statusFailed) {
+        } else if (isUnverified || statusFailed) {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/token-refresh`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/submit`,
             {
               method: "POST",
               headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -79,7 +80,7 @@ const KycClient = () => {
 
         } else {
           const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/submit`,
+            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/token-refresh`,
             {
               method: "POST",
               headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
@@ -133,14 +134,16 @@ const KycClient = () => {
               const ud = JSON.parse(localStorage.getItem("userData") || "{}");
               ud.kycStatus = "PENDING";
               localStorage.setItem("userData", JSON.stringify(ud));
-              router.push("/creative/dashboard");
+              const destination = ud.userType === "CLIENT" ? "/client/dashboard" : "/creative/dashboard";
+              router.push(destination);
             })
             .on("idCheck.onApplicantResubmitted", () => {
               if (!isMounted) return;
               const ud = JSON.parse(localStorage.getItem("userData") || "{}");
               ud.kycStatus = "PENDING";
               localStorage.setItem("userData", JSON.stringify(ud));
-              router.push("/creative/dashboard");
+              const destination = ud.userType === "CLIENT" ? "/client/dashboard" : "/creative/dashboard";
+              router.push(destination);
             })
             .on("idCheck.onError", (err: any) => {
               console.error("SumSub error:", err);
@@ -175,21 +178,17 @@ const KycClient = () => {
     return () => {
       isMounted = false;
 
-      // Destroy SDK instance
       if (sdkInstanceRef.current) {
         try { sdkInstanceRef.current.destroy?.(); } catch (_) {}
         sdkInstanceRef.current = null;
       }
 
-      // Remove script
       const s = document.getElementById("sumsub-script");
       if (s) s.remove();
 
-      // Clear container
       const container = document.getElementById("sumsub-container");
       if (container) container.innerHTML = "";
 
-      // Clear SDK global
       try { delete window.snsWebSdk; } catch (_) {}
     };
   }, []);

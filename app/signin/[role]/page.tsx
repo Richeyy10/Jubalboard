@@ -8,7 +8,7 @@ import clientsigninimg from "../../assets/client/signin.jpg";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { loginUser } from "../../lib/authService";
 import { ApiError } from "../../lib/api";
-import { parseAuthToken, saveSession } from "../../lib/session";
+import { parseAuthToken, parseRefreshToken, saveSession } from "../../lib/session";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24">
@@ -74,26 +74,27 @@ const SignIn: React.FC = () => {
 
       if (status === 201) {
         const token = parseAuthToken(data);
+        const refreshToken = parseRefreshToken(data);
+
         if (!token) {
           throw new Error("Login succeeded but no auth token was returned.");
         }
-        await saveSession(token);
 
-        // ✅ Correct path — user is nested under data.data.user
+        // Add this temporarily to confirm the refresh token key
+        console.log("Login response data.data:", data.data);
+
+        await saveSession(token, refreshToken ?? undefined);
+
         const user = data.data?.user;
-        console.log("profileStatus:", user?.profileStatus);
-        console.log("userType:", user?.userType);
         if (user) {
           localStorage.setItem("userData", JSON.stringify(user));
         }
 
-        // ✅ Always trust userType from API, never the URL param
         if (user?.profileStatus === "Not Completed") {
           const onboardingRoute = user?.userType === "CLIENT"
             ? "/client/profile"
             : "/creative/profile";
           router.push(onboardingRoute);
-          console.log("Full user object:", JSON.stringify(user, null, 2));
         } else {
           const dashboardRoute = user?.userType === "CLIENT"
             ? "/client/dashboard"

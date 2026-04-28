@@ -17,20 +17,19 @@ export const useKycStatus = () => {
       );
 
       if (res.ok) {
-        const data = await res.json();
-        // Get the userData to match contextType
+        const json = await res.json();
         const userData = JSON.parse(localStorage.getItem("userData") || "{}");
         const contextType = `${userData.userType}_${userData.accountType}`;
 
-        // Find the matching context entry
-        const entry = Array.isArray(data) 
-          ? data.find((d: any) => d.contextType === contextType)
-          : null;
+        const dataArray = Array.isArray(json.data) ? json.data : [];
+        console.log("dataArray:", dataArray);
+        console.log("contextType:", contextType);
+        console.log("matched entry:", dataArray.find((d: any) => d.contextType === contextType));
+        const entry = dataArray.find((d: any) => d.contextType === contextType);
 
-        const status = entry?.status ?? "UNVERIFIED";
+        const status = entry?.verificationStatus ?? "UNVERIFIED";
         setKycStatus(status);
 
-        // Keep localStorage in sync
         if (userData.kycStatus !== status) {
           userData.kycStatus = status;
           localStorage.setItem("userData", JSON.stringify(userData));

@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation"; // 👈 add useRouter
 import Sidebar from "@/app/components/creative/dashboard/sideBar";
 import DashboardTopbar from "@/app/components/creative/dashboard/dashboardTopbar";
-import { Search, SlidersHorizontal, ChevronDown, BadgeCheck, X } from "lucide-react";
+import { Search, SlidersHorizontal, ChevronDown, BadgeCheck, X, Loader2 } from "lucide-react";
 import { findGigsServices, allGigs } from "@/app/data";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import Image from "next/image";
 import { useGigStore } from "../../../lib/stores/gigStore";
+import { useCreativeProfile } from "@/app/lib/hooks/useCreativeProfile";
+import { useBriefs } from "../../../lib/hooks/useBriefs";
 
 const filterChips = ["All", "Recent", "$100-$200", "Graphic Designers", "Logo Design", "Posters", "Brand Identity", "Packaging"];
 
@@ -21,10 +23,12 @@ const CategoryGigsPage: React.FC = () => {
   const [activeChip, setActiveChip] = useState("All");
   const [search, setSearch] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { profile, loading: profileLoading, error } = useCreativeProfile();
+  const { gigs, loading: gigsLoading } = useBriefs({ limit: 50 });
 
-  const filteredGigs = allGigs.filter((gig) => {
+  const filteredGigs = gigs.filter((gig) => {
     const matchesSearch = gig.title.toLowerCase().includes(search.toLowerCase());
-    const matchesChip = activeChip === "All" || gig.title.includes(activeChip);
+    const matchesChip = activeChip === "All" || gig.title.includes(activeChip) || gig.category.includes(activeChip);
     return matchesSearch && matchesChip;
   });
 
@@ -34,11 +38,24 @@ const CategoryGigsPage: React.FC = () => {
     router.push(`/creative/find-gigs/${encodeURIComponent(gig.category)}/pitch`);
   };
 
+  if (profileLoading || gigsLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-white">
+        <Loader2 className="animate-spin text-[#E2554F]" size={40} />
+      </div>
+    );
+  }
+
+  const userName = profile?.fullName || "Creative";
+  const userAvatar =
+    profile?.avatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <DashboardTopbar
-        userName="Natasha John"
-        userAvatar="https://i.pravatar.cc/150?img=47"
+        userName={userName}
+        userAvatar={userAvatar}
         sidebarOpen={sidebarOpen}
         onMenuClick={() => setSidebarOpen(!sidebarOpen)}
       />
@@ -101,11 +118,10 @@ const CategoryGigsPage: React.FC = () => {
               <button
                 key={chip}
                 onClick={() => setActiveChip(chip)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  activeChip === chip
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeChip === chip
                     ? "bg-red-500 text-white"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+                  }`}
               >
                 {chip}
               </button>

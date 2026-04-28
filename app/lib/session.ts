@@ -1,12 +1,13 @@
-export async function saveSession(token: string) {
+export async function saveSession(token: string, refreshToken?: string) {
   if (!token) {
     throw new Error("Missing auth token when saving session.");
   }
+
   const res = await fetch("/api/auth/session", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ token }),
+    body: JSON.stringify({ token, refreshToken }),
   });
 
   if (!res.ok) {
@@ -31,6 +32,17 @@ export function parseAuthToken(responseData: any): string | null {
     responseData.data?.token ||
     responseData.data?.accessToken ||
     responseData.result?.token ||
+    null
+  );
+}
+
+// Add this alongside parseAuthToken
+export function parseRefreshToken(responseData: any): string | null {
+  if (!responseData) return null;
+  return (
+    responseData.refreshToken ||
+    responseData.data?.refreshToken ||
+    responseData.result?.refreshToken ||
     null
   );
 }

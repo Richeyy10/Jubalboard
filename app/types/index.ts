@@ -89,6 +89,7 @@ export type FreshGig = {
   skills?: string;
   referenceFile?: string;
   deliverables?: string[];
+  currency?: string;
   postedBy: {
     name: string;
     avatar: string;
