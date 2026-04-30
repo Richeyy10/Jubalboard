@@ -78,6 +78,7 @@ const PostBriefForm: React.FC = () => {
       try {
         const tokenRes = await fetch("/api/auth/session/token");
         const { token } = await tokenRes.json();
+        console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/v1/briefs/categories`,
           { headers: { Authorization: `Bearer ${token}` } }
