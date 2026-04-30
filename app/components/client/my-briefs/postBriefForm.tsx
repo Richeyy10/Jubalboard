@@ -80,7 +80,7 @@ const PostBriefForm: React.FC = () => {
         const { token } = await tokenRes.json();
         console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/briefs/categories`,
+          '/api/v1/briefs/categories',
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const json = await res.json();
@@ -105,7 +105,7 @@ const PostBriefForm: React.FC = () => {
       const { token } = await tokenRes.json();
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/platform-services?categoryId=${form.projectCategoryId}`,
+        `/api/v1/platform-services?categoryId=${form.projectCategoryId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const json = await res.json();
@@ -178,7 +178,7 @@ const PostBriefForm: React.FC = () => {
       if (form.referenceFile) formData.append("referenceFiles", form.referenceFile);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/briefs`,
+        '/api/v1/briefs',
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

@@ -47,7 +47,7 @@ export function useBriefs({ categoryId, limit = 20 }: UseBriefOptions = {}) {
         params.set("limit", String(limit));
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/briefs?${params.toString()}`,
+          `/api/v1/briefs?${params.toString()}`,
           { headers: { Authorization: `Bearer ${token}` }, credentials: "include" }
         );
 

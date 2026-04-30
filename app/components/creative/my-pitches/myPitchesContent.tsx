@@ -53,7 +53,7 @@ const MyPitchesContent: React.FC = () => {
       else params.set("status", "");
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/pitches/me?${params.toString()}`,
+        `/api/v1/pitches/me?${params.toString()}`,
         {
           credentials: "include",
           headers: {

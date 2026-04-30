@@ -160,7 +160,7 @@ export default function MyPitchPage() {
       };
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/pitches`,
+        `/api/v1/pitches`,
         {
           method: "POST",
           headers: {

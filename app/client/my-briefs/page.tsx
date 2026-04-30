@@ -128,7 +128,7 @@ const MyBriefs: React.FC = () => {
         const results = await Promise.all(
           ALL_STATUSES.map((status) =>
             fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/api/v1/briefs/me?status=${status}`,
+              `/api/v1/briefs/me?status=${status}`,
               { headers: { Authorization: `Bearer ${token}` }, credentials: "include" }
             ).then((r) => r.json())
           )

@@ -12,7 +12,7 @@ export const useKycStatus = () => {
       const { token } = await tokenRes.json();
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/status`,
+        '/api/v1/verification/status',
         { headers: { Authorization: `Bearer ${token}` }, credentials: "include" }
       );
 

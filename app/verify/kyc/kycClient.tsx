@@ -72,7 +72,7 @@ const KycClient = () => {
         if (!token) throw new Error("Unauthorized. Please log in again.");
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/start`,
+          '/api/v1/verification/start',
           {
             method: "POST",
             headers: {

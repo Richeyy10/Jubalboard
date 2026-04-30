@@ -93,7 +93,7 @@ const MyGigsContent: React.FC = () => {
 
       const params = new URLSearchParams({ filter });
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/projects/creative?${params.toString()}`,
+        `/api/v1/projects/creative?${params.toString()}`,
         {
           credentials: "include",
           headers: {
