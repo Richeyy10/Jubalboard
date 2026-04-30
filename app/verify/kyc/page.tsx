@@ -29,7 +29,7 @@ const KycVerificationPage = () => {
         />
       </div>
       <KycClient />
-      <div className="flex justify-center pb-10">
+      {/* <div className="flex justify-center pb-10">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-[13px] font-semibold text-gray-500 hover:text-[#1a1a2e] transition-colors"
@@ -39,7 +39,7 @@ const KycVerificationPage = () => {
           </svg>
           Back to Dashboard
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -24,10 +24,11 @@ const CreativeDashboard: React.FC = () => {
   const [showKycModal, setShowKycModal] = useState(false);
 
   useEffect(() => {
-  if (!kycLoading && kycStatus !== null && kycStatus === "UNVERIFIED") {
+  if (!kycLoading && kycStatus !== null && kycStatus !== "PROVIDER_APPROVED") {
     setShowKycModal(true);
   }
 }, [kycStatus, kycLoading]);
+console.log("kycStatus:", kycStatus, "kycLoading:", kycLoading);
 
   if (profileLoading || kycLoading) {
     return (

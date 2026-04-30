@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Clock } from "lucide-react";
 
 const KycClient = () => {
   const router = useRouter();
@@ -10,17 +10,21 @@ const KycClient = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
+  const [alreadyPending, setAlreadyPending] = useState(false);
   const launchedRef = useRef(false);
+
+  const getDestination = () => {
+    const ud = JSON.parse(localStorage.getItem("userData") || "{}");
+    return ud.userType === "CLIENT" ? "/client/dashboard" : "/creative/dashboard";
+  };
 
   const handleComplete = useCallback(
     (status: string) => {
       setCompleted(true);
       const ud = JSON.parse(localStorage.getItem("userData") || "{}");
-      ud.kycStatus = status ?? "PENDING"; // use actual status from Didit
+      ud.kycStatus = status ?? "PENDING";
       localStorage.setItem("userData", JSON.stringify(ud));
-      const destination =
-        ud.userType === "CLIENT" ? "/client/dashboard" : "/creative/dashboard";
-      setTimeout(() => router.push(destination), 1500); // brief pause so user sees success state
+      setTimeout(() => router.push(getDestination()), 1500);
     },
     [router]
   );
@@ -28,7 +32,6 @@ const KycClient = () => {
   // Listen for postMessage events from the Didit iframe
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Accept messages from both possible Didit origins
       const allowedOrigins = [
         "https://verify.didit.me",
         "https://www.didit.com",
@@ -71,26 +74,35 @@ const KycClient = () => {
         const { token } = await tokenRes.json();
         if (!token) throw new Error("Unauthorized. Please log in again.");
 
-        const res = await fetch(
-          '/api/v1/verification/start',
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ verificationType: "IDENTITY" }),
-            signal: controller.signal,
-          }
-        );
+        const res = await fetch("/api/v1/verification/start", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ verificationType: "IDENTITY" }),
+          signal: controller.signal,
+        });
 
         clearTimeout(timeout);
 
         if (!res.ok) {
-          const errBody = await res.text();
+          const errBody = await res.json().catch(() => ({}));
           console.error("Verification start failed:", res.status, errBody);
-          throw new Error("Failed to start verification session. Please try again.");
+
+          // Already in review — don't show error, show pending state instead
+          if (
+            res.status === 400 &&
+            errBody?.message === "User verification is already in review"
+          ) {
+            setAlreadyPending(true);
+            return;
+          }
+
+          throw new Error(
+            errBody?.message ?? "Failed to start verification session. Please try again."
+          );
         }
 
         const data = await res.json();
@@ -131,6 +143,29 @@ const KycClient = () => {
         </div>
       )}
 
+      {/* Already pending state */}
+      {alreadyPending && !loading && (
+        <div className="flex flex-col items-center gap-4 mt-10 max-w-md w-full">
+          <div className="flex flex-col items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-xl px-6 py-8 w-full text-center">
+            <Clock size={40} className="text-yellow-500" />
+            <p className="text-yellow-700 font-semibold text-base">
+              Verification In Review
+            </p>
+            <p className="text-yellow-600 text-sm leading-relaxed">
+              Your identity verification has already been submitted and is currently
+              being reviewed. This usually takes a short while — we'll notify you
+              once it's done.
+            </p>
+          </div>
+          <button
+            onClick={() => router.push(getDestination())}
+            className="px-6 py-2.5 bg-[#1a1a2e] text-white text-sm font-medium rounded-lg hover:bg-[#2a2a50] transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      )}
+
       {error && (
         <div className="flex flex-col items-center gap-4 mt-10 max-w-md w-full">
           <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-5 py-4 w-full">
@@ -167,7 +202,6 @@ const KycClient = () => {
             allow="camera; microphone; fullscreen; autoplay; encrypted-media"
             title="Identity Verification"
           />
-          {/* Fallback if postMessage never fires */}
           <button
             onClick={() => handleComplete("PENDING")}
             className="mt-4 text-sm text-gray-400 underline hover:text-gray-600 transition-colors"

@@ -8,6 +8,8 @@ import DashboardTopbar from "@/app/components/creative/dashboard/dashboardTopbar
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import { useParams, useRouter } from "next/navigation";
 import { useGigStore } from "../../../../lib/stores/gigStore";
+import { useCreativeProfile } from "@/app/lib/hooks/useCreativeProfile";
+import { useKycStatus } from "@/app/lib/hooks/useKycStatus";
 
 const StarIcon = () => (
   <svg viewBox="0 0 20 20" fill="#F5A623" className="w-4 h-4">
@@ -93,6 +95,8 @@ export default function MyPitchPage() {
   const [isCollaborative, setIsCollaborative] = useState(false);
   const [milestones, setMilestones] = useState<Milestone[]>([emptyMilestone()]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { profile, loading: profileLoading } = useCreativeProfile();
+  const { kycStatus } = useKycStatus();
 
   useEffect(() => {
     if (!gig) router.replace("/creative/find-gigs");
@@ -103,6 +107,14 @@ export default function MyPitchPage() {
   }, [gig]);
 
   if (!gig) return null;
+
+  if (profileLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-white">
+        <Loader2 className="animate-spin text-[#E2554F]" size={40} />
+      </div>
+    );
+  }
 
   const briefRows = [
     { label: "Job Title", value: gig.title },
@@ -150,12 +162,12 @@ export default function MyPitchPage() {
         isCollaborative,
         milestones: paymentMode === "MILESTONE"
           ? milestones.map((m) => ({
-              title: m.title,
-              description: m.description,
-              amount: parseFloat(m.amount),
-              dueDate: m.dueDate,
-              notes: m.notes,
-            }))
+            title: m.title,
+            description: m.description,
+            amount: parseFloat(m.amount),
+            dueDate: m.dueDate,
+            notes: m.notes,
+          }))
           : [],
       };
 
@@ -184,6 +196,11 @@ export default function MyPitchPage() {
       setSubmitting(false);
     }
   };
+  const userName = profile?.fullName || "Creative";
+  const userAvatar =
+    profile?.avatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
+
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -192,8 +209,8 @@ export default function MyPitchPage() {
       )}
 
       <DashboardTopbar
-        userName="Natasha John"
-        userAvatar="https://i.pravatar.cc/150?img=47"
+        userName={userName}
+        userAvatar={userAvatar}
         sidebarOpen={sidebarOpen}
         onMenuClick={() => setSidebarOpen(!sidebarOpen)}
       />
@@ -238,8 +255,8 @@ export default function MyPitchPage() {
               <div className="flex items-start gap-4">
                 <div className="relative shrink-0">
                   <Image
-                    src="https://i.pravatar.cc/80?img=47"
-                    alt="Natasha John"
+                    src={userAvatar}
+                    alt={userName}
                     width={64}
                     height={64}
                     className="rounded-full object-cover"
@@ -247,10 +264,17 @@ export default function MyPitchPage() {
                   <span className="absolute bottom-1 right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-black text-lg">Natasha John</p>
+                  <p className="font-semibold text-black text-lg">{userName}</p>
                   <p className="text-sm text-green-500 font-medium mt-0.5">● Online</p>
                   <p className="text-sm text-black mt-2">Verification Status:</p>
-                  <span className="inline-block mt-1 p-2 bg-green-600 text-white text-xs font-semibold">Verified</span>
+                  <span className={`inline-block mt-1 p-2 text-white text-xs font-semibold ${kycStatus === "PROVIDER_APPROVED" ? "bg-green-600" :
+                      kycStatus === "PENDING" ? "bg-yellow-500" :
+                        "bg-gray-400"
+                    }`}>
+                    {kycStatus === "PROVIDER_APPROVED" ? "Verified" :
+                      kycStatus === "PENDING" ? "Pending" :
+                        "Unverified"}
+                  </span>
                 </div>
               </div>
               {gig.isPremium && (
@@ -331,7 +355,7 @@ export default function MyPitchPage() {
               value={coverNote}
               onChange={(e) => setCoverNote(e.target.value)}
               placeholder="Give the client your take: the idea, the vibe, and how you'll execute it"
-              className="w-full h-32 px-4 py-3 text-sm bg-white text-black placeholder-black border border-gray-200 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#e84545]/20 focus:border-[#e84545]/40 transition-all"
+              className="w-full h-32 px-4 py-3 text-sm bg-white text-black placeholder-grey-800 border border-black rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#e84545]/20 focus:border-[#e84545]/40 transition-all"
             />
           </Section>
 
@@ -363,11 +387,10 @@ export default function MyPitchPage() {
                       key={mode}
                       type="button"
                       onClick={() => setPaymentMode(mode)}
-                      className={`px-5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
-                        paymentMode === mode
-                          ? "bg-[#e84545] text-white border-[#e84545]"
-                          : "bg-white text-gray-600 border-gray-200 hover:border-[#e84545]"
-                      }`}
+                      className={`px-5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${paymentMode === mode
+                        ? "bg-[#e84545] text-white border-[#e84545]"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-[#e84545]"
+                        }`}
                     >
                       {mode === "FLAT" ? "Flat Payment" : "Milestone"}
                     </button>
@@ -379,19 +402,17 @@ export default function MyPitchPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-black">Collaborative Project</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Are you working with other creatives on this?</p>
+                  <p className="text-xs text-black mt-0.5">Are you working with other creatives on this?</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsCollaborative((prev) => !prev)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
-                    isCollaborative ? "bg-[#e84545]" : "bg-gray-200"
-                  }`}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${isCollaborative ? "bg-[#e84545]" : "bg-gray-200"
+                    }`}
                 >
                   <span
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                      isCollaborative ? "translate-x-7" : "translate-x-1"
-                    }`}
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isCollaborative ? "translate-x-7" : "translate-x-1"
+                      }`}
                   />
                 </button>
               </div>
@@ -403,16 +424,16 @@ export default function MyPitchPage() {
           <Section title="Pricing">
             <div className="relative">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500 font-medium">{gig.currency ?? "USD"}</span>
+                <span className="text-sm text-black font-medium">{gig.currency ?? "USD"}</span>
                 <input
                   type="number"
                   value={proposedAmount}
                   onChange={(e) => setProposedAmount(e.target.value)}
                   placeholder="Enter your proposed amount"
-                  className="flex-1 px-4 py-2.5 text-sm text-black border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
+                  className="flex-1 px-4 py-2.5 text-sm text-black border border-black rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
                 />
               </div>
-              <p className="text-xs text-gray-400 mt-1.5">Client's budget: {gig.budget}</p>
+              <p className="text-xs text-black mt-1.5">Client's budget: {gig.budget}</p>
             </div>
           </Section>
 
@@ -420,7 +441,7 @@ export default function MyPitchPage() {
           <Section title="Delivery Schedule">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-400 font-medium mb-1.5">Timeline</label>
+                <label className="block text-xs text-black font-medium mb-1.5">Timeline</label>
                 <div className="relative">
                   <select
                     value={timeline}
@@ -434,7 +455,7 @@ export default function MyPitchPage() {
                   </div>
                 </div>
                 {gig.timeline && (
-                  <p className="text-xs text-gray-400 mt-1.5">Client expects: {gig.timeline}</p>
+                  <p className="text-xs text-black mt-1.5">Client expects: {gig.timeline}</p>
                 )}
               </div>
 
@@ -445,7 +466,7 @@ export default function MyPitchPage() {
                     type="date"
                     value={deliveryDate}
                     onChange={(e) => setDeliveryDate(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm text-black border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#e84545]/20 pr-9"
+                    className="w-full px-3 py-2.5 text-sm text-black border border-black rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#e84545]/20 pr-9"
                   />
                   <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                     <CalendarIcon />
@@ -477,49 +498,49 @@ export default function MyPitchPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Title *</label>
+                        <label className="block text-xs text-black mb-1">Title *</label>
                         <input
                           value={m.title}
                           onChange={(e) => updateMilestone(i, "title", e.target.value)}
                           placeholder="e.g. Initial Design Draft"
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
+                          className="w-full px-3 py-2 text-sm text-black border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Amount *</label>
+                        <label className="block text-xs text-black mb-1">Amount *</label>
                         <input
                           type="number"
                           value={m.amount}
                           onChange={(e) => updateMilestone(i, "amount", e.target.value)}
                           placeholder="e.g. 500"
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
+                          className="w-full px-3 py-2 text-sm text-black border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Due Date *</label>
+                        <label className="block text-xs text-black mb-1">Due Date *</label>
                         <input
                           type="date"
                           value={m.dueDate}
                           onChange={(e) => updateMilestone(i, "dueDate", e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
+                          className="w-full px-3 py-2 text-sm text-black border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-400 mb-1">Description</label>
+                        <label className="block text-xs text-black mb-1">Description</label>
                         <input
                           value={m.description}
                           onChange={(e) => updateMilestone(i, "description", e.target.value)}
                           placeholder="What gets delivered"
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
+                          className="w-full px-3 py-2 text-sm text-black border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-xs text-gray-400 mb-1">Notes</label>
+                        <label className="block text-xs text-black mb-1">Notes</label>
                         <input
                           value={m.notes}
                           onChange={(e) => updateMilestone(i, "notes", e.target.value)}
                           placeholder="Any additional notes"
-                          className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
+                          className="w-full px-3 py-2 text-sm text-black border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
                         />
                       </div>
                     </div>
