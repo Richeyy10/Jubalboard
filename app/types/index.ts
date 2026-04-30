@@ -127,9 +127,9 @@ export interface CreativePitch {
   description: string;
   image: string;
   sentAt: string;
-  status: "approved" | "pending" | "rejected";
+  status: "approved" | "pending" | "rejected" | "ongoing"; // add ongoing
   client: {
-    id: string; 
+    id: string;
     name: string;
     avatar: string;
     verified?: boolean;

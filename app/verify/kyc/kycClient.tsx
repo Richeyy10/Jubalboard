@@ -1,196 +1,116 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, AlertCircle } from "lucide-react";
-
-declare global {
-  interface Window { snsWebSdk: any; }
-}
+import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const KycClient = () => {
   const router = useRouter();
+  const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const sdkInstanceRef = useRef<any>(null);
+  const [completed, setCompleted] = useState(false);
+  const launchedRef = useRef(false);
 
+  const handleComplete = useCallback(
+    (status: string) => {
+      setCompleted(true);
+      const ud = JSON.parse(localStorage.getItem("userData") || "{}");
+      ud.kycStatus = status ?? "PENDING"; // use actual status from Didit
+      localStorage.setItem("userData", JSON.stringify(ud));
+      const destination =
+        ud.userType === "CLIENT" ? "/client/dashboard" : "/creative/dashboard";
+      setTimeout(() => router.push(destination), 1500); // brief pause so user sees success state
+    },
+    [router]
+  );
+
+  // Listen for postMessage events from the Didit iframe
   useEffect(() => {
-    let isMounted = true;
+    const handleMessage = (event: MessageEvent) => {
+      // Accept messages from both possible Didit origins
+      const allowedOrigins = [
+        "https://verify.didit.me",
+        "https://www.didit.com",
+        "https://didit.com",
+      ];
+      if (!allowedOrigins.includes(event.origin)) return;
+
+      const { type, status, sessionId } = event.data ?? {};
+      console.log("[Didit postMessage]", event.origin, type, status, sessionId);
+
+      if (type === "didit:completed" || type === "verification_complete") {
+        handleComplete(status ?? "PENDING");
+      }
+
+      if (type === "didit:cancelled") {
+        setError("Verification was cancelled. Please try again when you're ready.");
+      }
+
+      if (type === "didit:error") {
+        setError("Something went wrong during verification. Please refresh and try again.");
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [handleComplete]);
+
+  // Fetch verification URL from backend
+  useEffect(() => {
+    if (launchedRef.current) return;
+    launchedRef.current = true;
 
     const launch = async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+
       try {
         const tokenRes = await fetch("/api/auth/session/token");
+        if (!tokenRes.ok) throw new Error("Could not retrieve session token.");
         const { token } = await tokenRes.json();
-        if (!token) throw new Error("Unauthorized");
+        if (!token) throw new Error("Unauthorized. Please log in again.");
 
-        const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-        const contextType = `${userData.userType}_${userData.accountType}`;
-
-        const statusRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/status`,
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/start`,
           {
-            method: "GET",
+            method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
             credentials: "include",
+            body: JSON.stringify({ verificationType: "IDENTITY" }),
+            signal: controller.signal,
           }
         );
 
-        const statusData = await statusRes.json();
-        const list = Array.isArray(statusData)
-          ? statusData
-          : Array.isArray(statusData?.data)
-          ? statusData.data
-          : [];
+        clearTimeout(timeout);
 
-        const existing = list.find((d: any) => d.contextType === contextType) ?? null;
-        const isDeclined = existing?.verificationStatus === "DECLINED";
-        const isUnverified = !existing || existing.verificationStatus === "UNVERIFIED";
-        const statusFailed = !statusRes.ok;
-
-        let sdkToken: string | null = null;
-
-        if (isDeclined) {
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/resubmit`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ contextType, verificationType: "IDENTITY" }),
-            }
-          );
-          const data = await res.json();
-          sdkToken = data?.data?.sdkToken ?? data?.sdkToken ?? null;
-
-        } else if (isUnverified || statusFailed) {
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/submit`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ contextType, verificationType: "IDENTITY" }),
-            }
-          );
-          const data = await res.json();
-          sdkToken = data?.data?.sdkToken ?? data?.sdkToken ?? null;
-
-        } else {
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/token-refresh`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ contextType, verificationType: "IDENTITY" }),
-            }
-          );
-          const data = await res.json();
-          sdkToken = data?.data?.sdkToken ?? data?.sdkToken ?? null;
+        if (!res.ok) {
+          const errBody = await res.text();
+          console.error("Verification start failed:", res.status, errBody);
+          throw new Error("Failed to start verification session. Please try again.");
         }
 
-        if (!sdkToken) throw new Error("No SDK token returned.");
-        if (!isMounted) return;
+        const data = await res.json();
+        const sdkUrl: string = data?.sdkUrl ?? data?.data?.sdkUrl ?? null;
 
-        const getNewToken = () =>
-          fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/v1/verification/token-refresh`,
-            {
-              method: "POST",
-              headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ contextType, verificationType: "IDENTITY" }),
-            }
-          )
-            .then((r) => r.json())
-            .then((d) => d?.data?.sdkToken ?? d?.sdkToken ?? "");
-
-        // Remove any existing script first
-        const existing_script = document.querySelector(
-          'script[src="https://static.sumsub.com/idensic/static/sns-websdk-builder.js"]'
-        );
-        if (existing_script) existing_script.remove();
-
-        const script = document.createElement("script");
-        script.src = "https://static.sumsub.com/idensic/static/sns-websdk-builder.js";
-        script.async = true;
-        script.id = "sumsub-script";
-
-        script.onload = () => {
-          if (!isMounted || !window.snsWebSdk) {
-            setError("SumSub SDK failed to initialize.");
-            return;
-          }
-
-          const instance = window.snsWebSdk
-            .init(sdkToken, getNewToken)
-            .withConf({ lang: "en", hideSumsubId: true })
-            .withOptions({ addViewportTag: false, adaptIframeHeight: true })
-            .on("idCheck.onApplicantSubmitted", () => {
-              if (!isMounted) return;
-              const ud = JSON.parse(localStorage.getItem("userData") || "{}");
-              ud.kycStatus = "PENDING";
-              localStorage.setItem("userData", JSON.stringify(ud));
-              const destination = ud.userType === "CLIENT" ? "/client/dashboard" : "/creative/dashboard";
-              router.push(destination);
-            })
-            .on("idCheck.onApplicantResubmitted", () => {
-              if (!isMounted) return;
-              const ud = JSON.parse(localStorage.getItem("userData") || "{}");
-              ud.kycStatus = "PENDING";
-              localStorage.setItem("userData", JSON.stringify(ud));
-              const destination = ud.userType === "CLIENT" ? "/client/dashboard" : "/creative/dashboard";
-              router.push(destination);
-            })
-            .on("idCheck.onError", (err: any) => {
-              console.error("SumSub error:", err);
-              if (isMounted) setError("Something went wrong. Please try again.");
-            })
-            .build();
-
-          instance.launch("#sumsub-container");
-          sdkInstanceRef.current = instance;
-
-          if (isMounted) setLoading(false);
-        };
-
-        script.onerror = () => {
-          if (isMounted) {
-            setError("Failed to load verification SDK.");
-            setLoading(false);
-          }
-        };
-
-        document.head.appendChild(script);
+        if (!sdkUrl) throw new Error("No verification URL returned from server.");
+        setVerificationUrl(sdkUrl);
       } catch (e: any) {
-        if (isMounted) {
-          setError(e.message || "An unexpected error occurred.");
-          setLoading(false);
+        if (e.name === "AbortError") {
+          setError("Request timed out. Please check your connection and try again.");
+        } else {
+          setError(e.message ?? "An unexpected error occurred.");
         }
+      } finally {
+        clearTimeout(timeout);
+        setLoading(false);
       }
     };
 
     launch();
-
-    return () => {
-      isMounted = false;
-
-      if (sdkInstanceRef.current) {
-        try { sdkInstanceRef.current.destroy?.(); } catch (_) {}
-        sdkInstanceRef.current = null;
-      }
-
-      const s = document.getElementById("sumsub-script");
-      if (s) s.remove();
-
-      const container = document.getElementById("sumsub-container");
-      if (container) container.innerHTML = "";
-
-      try { delete window.snsWebSdk; } catch (_) {}
-    };
   }, []);
 
   return (
@@ -212,13 +132,50 @@ const KycClient = () => {
       )}
 
       {error && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-5 py-4 max-w-md w-full mt-10">
-          <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
-          <p className="text-red-600 text-sm">{error}</p>
+        <div className="flex flex-col items-center gap-4 mt-10 max-w-md w-full">
+          <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-lg px-5 py-4 w-full">
+            <AlertCircle size={20} className="text-red-500 flex-shrink-0" />
+            <p className="text-red-600 text-sm">{error}</p>
+          </div>
+          <button
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              launchedRef.current = false;
+            }}
+            className="text-sm text-[#2196F3] underline"
+          >
+            Try again
+          </button>
         </div>
       )}
 
-      <div id="sumsub-container" className="w-full max-w-2xl min-h-[600px]" />
+      {completed && (
+        <div className="flex flex-col items-center gap-3 mt-20">
+          <CheckCircle2 size={48} className="text-green-500" />
+          <p className="text-gray-700 font-medium">Verification submitted!</p>
+          <p className="text-gray-400 text-sm">Redirecting you back...</p>
+        </div>
+      )}
+
+      {verificationUrl && !error && !completed && (
+        <>
+          <iframe
+            src={verificationUrl}
+            className="w-full max-w-2xl rounded-xl border border-gray-100 shadow-sm"
+            style={{ height: "700px", border: "none" }}
+            allow="camera; microphone; fullscreen; autoplay; encrypted-media"
+            title="Identity Verification"
+          />
+          {/* Fallback if postMessage never fires */}
+          <button
+            onClick={() => handleComplete("PENDING")}
+            className="mt-4 text-sm text-gray-400 underline hover:text-gray-600 transition-colors"
+          >
+            Already completed? Click here to continue
+          </button>
+        </>
+      )}
     </div>
   );
 };

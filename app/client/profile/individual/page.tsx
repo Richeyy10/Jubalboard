@@ -205,7 +205,7 @@ const IndividualProfile: React.FC = () => {
   };
 
   const handleSave = async () => {
-    if (!form.fullName || !form.contactNumber || !form.location || selectedCategories.length === 0) {
+    if (!form.fullName || !phoneNumber || !form.country || selectedCategories.length === 0) {
       setError("Please fill in all required fields marked with *");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
@@ -222,11 +222,11 @@ const IndividualProfile: React.FC = () => {
 
       const formData = new FormData();
       formData.append("fullName", form.fullName);
-      formData.append("contactNumber", form.contactNumber);
-      formData.append("locationCity", form.location);
+      formData.append("contactNumber", `${phoneCode}${phoneNumber}`);
+      formData.append("locationCity", form.country);
       formData.append("postalCode", form.postalCode);
       formData.append("streetAddress", form.streetAddress);
-      formData.append("preferredSocialLink", form.socialLink);
+      // formData.append("preferredSocialLink", form.socialLink);
       formData.append("preferredCommunication", commValueMap[form.communication]);
       formData.append("languagePreference", languageValueMap[form.language]);
       selectedCategories.forEach((id) => formData.append("categoriesOfInterest", id));
@@ -347,95 +347,95 @@ const IndividualProfile: React.FC = () => {
             </div>
           </div>
 
-        {selectedCountry && selectedCountry.states.length > 0 && (
-          <div>
-            <label className={labelClass}>State{reqStar}</label>
-            <div className="relative">
-              <select
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                className={`${inputClass} appearance-none pr-9 cursor-pointer`}
-              >
-                <option value="" disabled>Select state</option>
-                {selectedCountry.states.map((s) => (
-                  <option key={s.id} value={s.name}>{s.name}</option>
-                ))}
-              </select>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                <ChevronDown size={14} stroke="#6B7280" />
+          {selectedCountry && selectedCountry.states.length > 0 && (
+            <div>
+              <label className={labelClass}>State{reqStar}</label>
+              <div className="relative">
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className={`${inputClass} appearance-none pr-9 cursor-pointer`}
+                >
+                  <option value="" disabled>Select state</option>
+                  {selectedCountry.states.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <ChevronDown size={14} stroke="#6B7280" />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        
-        <div>
-          <label className={labelClass}>Postal Code</label>
-          <input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} placeholder="Type here" className={inputClass} />
-        </div>
-      </div>
-
-      {/* Street Address */}
-      <div>
-        <label className={labelClass}>Street Address</label>
-        <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
-      </div>
-
-      {/* Social Link */}
-      <div>
-        <label className={labelClass}>Preferred Social Link</label>
-        <input value={form.socialLink} onChange={(e) => update("socialLink", e.target.value)} placeholder="Type here" className={inputClass} />
-      </div>
-
-      {/* Row 3 */}
-      <div className="grid grid-cols-2 gap-4">
-        <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} required />
-        <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} required />
-      </div>
-
-      {/* Categories */}
-      <div>
-        <label className={labelClass}>Categories of Interest{reqStar}</label>
-        <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
-          {categoriesLoading ? (
-            <div className="flex items-center gap-2 text-[13px] text-gray-400">
-              <Loader2 size={14} className="animate-spin" /> Loading categories...
-            </div>
-          ) : (
-            categories.map((cat) => {
-              const selected = selectedCategories.includes(cat.id);
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => toggleCategory(cat.id)}
-                  className={`px-3.5 py-[7px] rounded-md cursor-pointer border text-[13px] flex items-center gap-1.5 transition-all duration-150
-                        ${selected
-                      ? "bg-white border-gray-300 text-black font-medium"
-                      : "bg-white border-gray-300 text-black font-normal"
-                    }`}
-                >
-                  {selected && <Check size={12} stroke="#1a1a2e" strokeWidth={3} />}
-                  {cat.name}
-                </button>
-              );
-            })
           )}
+
+          <div>
+            <label className={labelClass}>Postal Code</label>
+            <input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} placeholder="Type here" className={inputClass} />
+          </div>
         </div>
+
+        {/* Street Address */}
+        <div>
+          <label className={labelClass}>Street Address</label>
+          <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
+        </div>
+
+        {/* Social Link */}
+        <div>
+          <label className={labelClass}>Preferred Social Link</label>
+          <input value={form.socialLink} onChange={(e) => update("socialLink", e.target.value)} placeholder="Type here" className={inputClass} />
+        </div>
+
+        {/* Row 3 */}
+        <div className="grid grid-cols-2 gap-4">
+          <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} required />
+          <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} required />
+        </div>
+
+        {/* Categories */}
+        <div>
+          <label className={labelClass}>Categories of Interest{reqStar}</label>
+          <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
+            {categoriesLoading ? (
+              <div className="flex items-center gap-2 text-[13px] text-gray-400">
+                <Loader2 size={14} className="animate-spin" /> Loading categories...
+              </div>
+            ) : (
+              categories.map((cat) => {
+                const selected = selectedCategories.includes(cat.id);
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => toggleCategory(cat.id)}
+                    className={`px-3.5 py-[7px] rounded-md cursor-pointer border text-[13px] flex items-center gap-1.5 transition-all duration-150
+                        ${selected
+                        ? "bg-white border-gray-300 text-black font-medium"
+                        : "bg-white border-gray-300 text-black font-normal"
+                      }`}
+                  >
+                    {selected && <Check size={12} stroke="#1a1a2e" strokeWidth={3} />}
+                    {cat.name}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+
       </div>
 
-    </div>
+      {/* Save */}
+      <div className="flex justify-end mt-9">
+        <button
+          onClick={handleSave}
+          disabled={loading}
+          className="bg-[#E2554F] border-none rounded-lg px-12 py-3.5 cursor-pointer text-white font-bold text-[15px] hover:bg-[#d44a44] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+        >
+          {loading ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : "Save"}
+        </button>
+      </div>
 
-        {/* Save */ }
-  <div className="flex justify-end mt-9">
-    <button
-      onClick={handleSave}
-      disabled={loading}
-      className="bg-[#E2554F] border-none rounded-lg px-12 py-3.5 cursor-pointer text-white font-bold text-[15px] hover:bg-[#d44a44] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-    >
-      {loading ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : "Save"}
-    </button>
-  </div>
-
-      </div >
+    </div >
   );
 };
 

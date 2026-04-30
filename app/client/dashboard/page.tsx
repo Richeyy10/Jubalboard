@@ -41,10 +41,11 @@ const ClientDashboard: React.FC = () => {
   const [showKycModal, setShowKycModal] = useState(false);
 
   useEffect(() => {
-    if (!kycLoading && kycStatus !== null && kycStatus === "UNVERIFIED") {
-      setShowKycModal(true);
-    }
-  }, [kycStatus, kycLoading]);
+  console.log("kycLoading:", kycLoading, "kycStatus:", kycStatus);
+  if (!kycLoading && kycStatus !== null && kycStatus === "UNVERIFIED") {
+    setShowKycModal(true);
+  }
+}, [kycStatus, kycLoading]);
 
   useEffect(() => {
     const fetchProfile = async () => {

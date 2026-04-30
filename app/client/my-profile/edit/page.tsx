@@ -240,7 +240,7 @@ const EditClientProfile: React.FC = () => {
       if (form.locationCity.trim()) formData.append("locationCity", form.locationCity.trim());
       if (form.streetAddress.trim()) formData.append("streetAddress", form.streetAddress.trim());
       if (form.postalCode.trim()) formData.append("postalCode", form.postalCode.trim());
-      if (form.socialLink.trim()) formData.append("preferredSocialLink", form.socialLink.trim());
+      // if (form.socialLink.trim()) formData.append("preferredSocialLink", form.socialLink.trim());
       formData.append("languagePreference", languageApiMap[form.language] || "en");
       formData.append("preferredCommunication", commApiMap[form.communication] || "CHAT_ONLY");
       selectedCategories.forEach((id) => formData.append("categoriesOfInterest", id));

@@ -1,40 +1,156 @@
 "use client";
-
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import GigStatsBar from "@/app/components/creative/my-gigs/gigStatsBar";
 import GigListItem from "@/app/components/creative/my-gigs/gigListItem";
 import GigsPagination from "@/app/components/creative/my-gigs/gigsPagination";
 import { Search, SlidersHorizontal, ChevronDown } from "lucide-react";
-import { myGigs } from "@/app/data";
+import { MyGig } from "@/app/types";
+
+interface ApiGig {
+  id: string;
+  title: string;
+  status: string;
+  agreedAmount: number;
+  netEarnings: number;
+  startedAt: string;
+  deadline: string;
+  client: {
+    id: string;
+    name: string;
+    avatarUrl: string | null;
+  };
+  escrowStatus: string;
+  revisionsUsed: number;
+  revisionsAllowed: number;
+  createdAt: string;
+}
 
 const filterChips = ["All Gigs", "Active", "Recent", "Completed", "Revised", "Partially Completed", "On Collab"];
+
+const chipToFilter: Record<string, string> = {
+  "All Gigs": "all",
+  Active: "active",
+  Recent: "recent",
+  Completed: "completed",
+  Revised: "revised",
+  "Partially Completed": "partially_completed",
+  "On Collab": "on_collab",
+};
+
+// Map API status → MyGig status
+const apiStatusToMyGig = (status: string): MyGig["status"] => {
+  const map: Record<string, MyGig["status"]> = {
+    IN_PROGRESS: "In Progress",
+    COMPLETED: "Completed",
+    REVISED: "Revised",
+    COLLABORATING: "Collaborating",
+    PARTIALLY_COMPLETED: "Partially Completed",
+    ACTIVE: "Active",
+  };
+  return map[status] ?? "Active";
+};
+
+// Calculate dueIn string from deadline
+const getDueIn = (deadline: string): string => {
+  const diff = new Date(deadline).getTime() - Date.now();
+  if (diff <= 0) return "0 days 00hrs 00mins";
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return `${days} day${days !== 1 ? "s" : ""} ${String(hours).padStart(2, "0")}hrs ${String(mins).padStart(2, "0")}mins`;
+};
+
+// Derive progress % from status
+const getProgress = (status: string): number => {
+  const map: Record<string, number> = {
+    IN_PROGRESS: 60,
+    ACTIVE: 30,
+    PARTIALLY_COMPLETED: 75,
+    REVISED: 90,
+    COLLABORATING: 50,
+    COMPLETED: 100,
+  };
+  return map[status] ?? 0;
+};
 
 const MyGigsContent: React.FC = () => {
   const [activeChip, setActiveChip] = useState("All Gigs");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [currentPage, setCurrentPage] = useState<number>(1);
   const [perPage, setPerPage] = useState(6);
+  const [gigs, setGigs] = useState<MyGig[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = myGigs.filter((gig) => {
-    const matchesSearch = gig.title.toLowerCase().includes(search.toLowerCase());
-    const matchesChip =
-      activeChip === "All Gigs" ||
-      gig.status.toLowerCase() === activeChip.toLowerCase();
-    return matchesSearch && matchesChip;
-  });
+  const fetchGigs = useCallback(async (filter: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const tokenRes = await fetch("/api/auth/session/token");
+      const { token } = await tokenRes.json();
+
+      const params = new URLSearchParams({ filter });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/projects/creative?${params.toString()}`,
+        {
+          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error(`Failed to fetch gigs (${res.status})`);
+
+      const json = await res.json();
+      const list: ApiGig[] = Array.isArray(json.data) ? json.data : [];
+      setTotal(json.total ?? list.length);
+
+      const mapped: MyGig[] = list.map((g) => ({
+        id: g.id,
+        title: g.title,
+        thumbnail: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=120&q=80", // placeholder
+        client: {
+          name: g.client.name,
+          avatar: g.client.avatarUrl ?? "https://i.pravatar.cc/150?img=1",
+        },
+        dueIn: getDueIn(g.deadline),
+        progress: getProgress(g.status),
+        status: apiStatusToMyGig(g.status),
+      }));
+
+      setGigs(mapped);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGigs(chipToFilter[activeChip]);
+    setPage(1);
+  }, [activeChip, fetchGigs]);
+
+  // Client-side search filter
+  const filtered = gigs.filter((gig) =>
+    gig.title.toLowerCase().includes(search.toLowerCase())
+  );
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
     <div>
-      <Breadcrumb crumbs={[
-        { label: "Dashboard", path: "/creative/dashboard" },
-        { label: "My Gigs" },
-      ]} />
-
+      <Breadcrumb
+        crumbs={[
+          { label: "Dashboard", path: "/creative/dashboard" },
+          { label: "My Gigs" },
+        ]}
+      />
       <h1 className="text-2xl font-heading font-bold text-gray-900 mb-5">My Gigs</h1>
 
       {/* Search + Filter */}
@@ -73,27 +189,42 @@ const MyGigsContent: React.FC = () => {
         ))}
       </div>
 
-      {/* Stats */}
-      <GigStatsBar gigs={myGigs} />
+      {/* States */}
+      {loading && (
+        <p className="text-sm text-gray-400 text-center py-12">Loading gigs…</p>
+      )}
+      {error && (
+        <p className="text-sm text-red-500 text-center py-12">{error}</p>
+      )}
 
-      {/* List */}
-      <div className="mt-6">
-        <h2 className="text-2xl font-bold text-black mb-4">All ({filtered.length})</h2>
-        <div className="flex flex-col gap-3">
-          {paginated.map((gig) => (
-            <GigListItem key={gig.id} gig={gig} />
-          ))}
-        </div>
-      </div>
+      {!loading && !error && (
+        <>
+          {/* Stats */}
+          <GigStatsBar gigs={gigs} />
 
-      {/* Pagination */}
-      <GigsPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        perPage={perPage}
-        onPageChange={setPage}
-        onPerPageChange={(val) => { setPerPage(val); setPage(1); }}
-      />
+          {/* List */}
+          <div className="mt-6">
+            <h2 className="text-2xl font-bold text-black mb-4">All ({filtered.length})</h2>
+            <div className="flex flex-col gap-3">
+              {paginated.map((gig) => (
+                <GigListItem key={gig.id} gig={gig} />
+              ))}
+            </div>
+            {filtered.length === 0 && (
+              <p className="text-sm text-gray-400 text-center py-12">No gigs found.</p>
+            )}
+          </div>
+
+          {/* Pagination */}
+          <GigsPagination
+            currentPage={page}
+            totalPages={totalPages}
+            perPage={perPage}
+            onPageChange={setPage}
+            onPerPageChange={(val) => { setPerPage(val); setPage(1); }}
+          />
+        </>
+      )}
     </div>
   );
 };

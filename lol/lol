@@ -1,0 +1,11 @@
+{
+  "success": true,
+  "data": {
+    "success": true,
+    "sdkToken": "ffejnefnenfeknfe",
+    "sdkUrl": "https://verify.didit.me/session/ffejnefnenfeknfe",
+    "message": "Verification session started. Launch the Didit SDK with the provided token."
+  },
+  "message": "Verification session started. Launch the Didit SDK with the provided token.",
+  "timestamp": "2026-04-29T08:35:12.904Z"
+}
