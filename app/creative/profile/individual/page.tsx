@@ -134,7 +134,7 @@ const TellUsAboutYou: React.FC = () => {
     const fetchCountries = async () => {
       try {
         const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
-        const response = await fetch(`${BASE_URL}/api/v1/platform/countries`, { credentials: "include" });
+        const response = await fetch('/api/v1/platform/countries', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
           if (apiResponse.success && apiResponse.data?.countries) {
@@ -153,7 +153,7 @@ const TellUsAboutYou: React.FC = () => {
     const fetchCurrencies = async () => {
       try {
         const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
-        const response = await fetch(`${BASE_URL}/api/v1/platform/currencies`, { credentials: "include" });
+        const response = await fetch('/api/v1/platform/currencies', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
           if (apiResponse.success && apiResponse.data?.currencies) {
@@ -174,7 +174,7 @@ const TellUsAboutYou: React.FC = () => {
     const fetchCategories = async () => {
       try {
         const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
-        const response = await fetch(`${BASE_URL}/api/v1/categories`, { credentials: "include" });
+        const response = await fetch('/api/v1/categories', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
           if (apiResponse.success && Array.isArray(apiResponse.data)) {
