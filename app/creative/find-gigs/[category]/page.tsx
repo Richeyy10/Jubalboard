@@ -27,10 +27,14 @@ const CategoryGigsPage: React.FC = () => {
   const { gigs, loading: gigsLoading } = useBriefs({ limit: 50 });
 
   const filteredGigs = gigs.filter((gig) => {
-    const matchesSearch = gig.title.toLowerCase().includes(search.toLowerCase());
-    const matchesChip = activeChip === "All" || gig.title.includes(activeChip) || gig.category.includes(activeChip);
-    return matchesSearch && matchesChip;
-  });
+  const title = gig.title ?? ""; // try fallback field names
+  const matchesSearch = title.toLowerCase().includes(search.toLowerCase());
+  const matchesChip =
+    activeChip === "All" ||
+    title.includes(activeChip) ||
+    gig.category?.includes(activeChip);
+  return matchesSearch && matchesChip;
+});
 
   // 👇 same handler as FreshGigs
   const handlePitchNow = (gig: typeof allGigs[0]) => {
@@ -119,8 +123,8 @@ const CategoryGigsPage: React.FC = () => {
                 key={chip}
                 onClick={() => setActiveChip(chip)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeChip === chip
-                    ? "bg-red-500 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-red-500 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                   }`}
               >
                 {chip}

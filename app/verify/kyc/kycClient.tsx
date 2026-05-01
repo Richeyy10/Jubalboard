@@ -11,6 +11,7 @@ const KycClient = () => {
   const [error, setError] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
   const [alreadyPending, setAlreadyPending] = useState(false);
+  const [alreadyVerified, setAlreadyVerified] = useState(false);
   const launchedRef = useRef(false);
 
   const getDestination = () => {
@@ -100,6 +101,14 @@ const KycClient = () => {
             return;
           }
 
+          if (
+            res.status === 400 &&
+            errBody?.message === "User already verified"
+          ) {
+            setAlreadyVerified(true);
+            return;
+          }
+
           throw new Error(
             errBody?.message ?? "Failed to start verification session. Please try again."
           );
@@ -155,6 +164,26 @@ const KycClient = () => {
               Your identity verification has already been submitted and is currently
               being reviewed. This usually takes a short while — we'll notify you
               once it's done.
+            </p>
+          </div>
+          <button
+            onClick={() => router.push(getDestination())}
+            className="px-6 py-2.5 bg-[#1a1a2e] text-white text-sm font-medium rounded-lg hover:bg-[#2a2a50] transition-colors"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      )}
+
+      {alreadyVerified && !loading && (
+        <div className="flex flex-col items-center gap-4 mt-10 max-w-md w-full">
+          <div className="flex flex-col items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-6 py-8 w-full text-center">
+            <CheckCircle2 size={40} className="text-green-500" />
+            <p className="text-green-700 font-semibold text-base">
+              Already Verified
+            </p>
+            <p className="text-green-600 text-sm leading-relaxed">
+              Your identity has already been verified. You have full access to all features.
             </p>
           </div>
           <button

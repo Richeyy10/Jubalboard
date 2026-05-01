@@ -47,7 +47,7 @@ const PitchCard: React.FC<Props> = ({ pitch }) => {
         <h4 className="font-semibold font-heading text-black text-sm mb-1">{pitch.gigTitle}</h4>
         <p className="text-xs text-black font-body mb-0.5">Budget: {pitch.budget}</p>
         <p className="text-xs text-black font-body mb-0.5">Timeline: {pitch.timeline}</p>
-        <p className="text-xs text-black font-body mb-3 truncate">Desc: {pitch.description}</p>
+        <p className="text-xs text-black font-body mb-3 truncate">Cover Letter: {pitch.description}</p>
 
         {/* Client + Status */}
         <div className="flex flex-col gap-2 mb-3">

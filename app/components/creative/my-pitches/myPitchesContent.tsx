@@ -5,33 +5,38 @@ import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import PitchCard from "./pitchCard";
 import { CreativePitch } from "@/app/types";
 
+interface ApiBrief {
+  id: string;
+  jobTitle: string;
+  budgetMin: number;
+  budgetMax: number;
+  currency?: string;
+  status?: string;
+}
+
 interface ApiPitch {
   id: string;
   briefId: string;
   creativeId: string;
-  coverLetter: string;
-  proposedRate: number;
-  estimatedDuration: string;
+  coverNote: string;
+  proposedAmount: number;
+  deliveryDate?: string;
+  currency?: string;
   status: string;
-  brief: {
-    id: string;
-    title: string;
-    budget: number;
-    status: string;
-  };
+  brief?: ApiBrief;
   createdAt: string;
   updatedAt: string;
 }
 
-const filterChips = ["All Pitches", "Approved", "Pending", "Ongoing"];
-const PAGE_SIZE = 6;
-
-const chipToStatus: Record<string, string | null> = {
-  "All Pitches": null,
-  Approved: "APPROVED",
-  Pending: "PENDING",
-  Ongoing: "ONGOING",
+const filterChips = ["All Pitches", "PENDING", "APPROVED", "REJECTED"];
+const chipLabels: Record<string, string> = {
+  "All Pitches": "All Pitches",
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
 };
+const ALL_STATUSES = ["PENDING", "APPROVED", "REJECTED"];
+const PAGE_SIZE = 6;
 
 const MyPitchesContent: React.FC = () => {
   const [activeChip, setActiveChip] = useState("All Pitches");
@@ -41,50 +46,57 @@ const MyPitchesContent: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchPitches = useCallback(async (status: string | null) => {
+  const fetchPitches = useCallback(async (chip: string) => {
     setLoading(true);
     setError(null);
     try {
       const tokenRes = await fetch("/api/auth/session/token");
       const { token } = await tokenRes.json();
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
 
-      const params = new URLSearchParams();
-      if (status) params.set("status", status);
-      else params.set("status", "");
+      let list: ApiPitch[] = [];
 
-      const res = await fetch(
-        `/api/v1/pitches/me?${params.toString()}`,
-        {
+      if (chip === "All Pitches") {
+        const results = await Promise.all(
+          ALL_STATUSES.map((status) =>
+            fetch(`/api/v1/pitches/me?status=${status}`, {
+              credentials: "include",
+              headers,
+            }).then((r) => r.json())
+          )
+        );
+        list = results.flatMap((data) =>
+          Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : []
+        );
+      } else {
+        const res = await fetch(`/api/v1/pitches/me?status=${chip}`, {
           credentials: "include",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      if (!res.ok) throw new Error(`Failed to fetch pitches (${res.status})`);
-
-      const data = await res.json();
-
-
-      // Handle whatever shape the API returns
-      const list: ApiPitch[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data.data)
-        ? data.data
-        : Array.isArray(data.pitches)
-        ? data.pitches
-        : [];
+          headers,
+        });
+        if (!res.ok) throw new Error(`Failed to fetch pitches (${res.status})`);
+        const data = await res.json();
+        list = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+      }
 
       const mapped: CreativePitch[] = list.map((p) => ({
         id: p.id,
-        gigTitle: p.brief.title,
+        gigTitle: p.brief?.jobTitle ?? "Untitled",
         category: "—",
-        budget: `₦${p.brief.budget.toLocaleString()}`,
-        timeline: p.estimatedDuration,
-        description: p.coverLetter,
-        image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&q=80",
+        budget: p.brief?.budgetMin
+          ? `$${p.brief.budgetMin.toLocaleString()} - $${p.brief.budgetMax.toLocaleString()}`
+          : `$${p.proposedAmount.toLocaleString()}`,
+        timeline: p.deliveryDate
+          ? new Date(p.deliveryDate).toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })
+          : "—",
+        description: p.coverNote ?? "",
+        image: "",
         sentAt: new Date(p.createdAt).toLocaleString("en-GB", {
           day: "numeric",
           month: "short",
@@ -96,7 +108,7 @@ const MyPitchesContent: React.FC = () => {
         client: {
           id: "",
           name: "Client",
-          avatar: "https://i.pravatar.cc/150?img=1",
+          avatar: `https://ui-avatars.com/api/?name=CL&background=1a1a2e&color=fff&size=128`,
           verified: false,
           isOnline: false,
         },
@@ -111,13 +123,12 @@ const MyPitchesContent: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const status = chipToStatus[activeChip];
-    fetchPitches(status);
+    fetchPitches(activeChip);
     setVisibleCount(PAGE_SIZE);
   }, [activeChip, fetchPitches]);
 
   const filtered = pitches.filter((pitch) =>
-    pitch.gigTitle.toLowerCase().includes(search.toLowerCase())
+    (pitch.gigTitle ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   const visible = filtered.slice(0, visibleCount);
@@ -138,10 +149,7 @@ const MyPitchesContent: React.FC = () => {
       {/* Search + Filter */}
       <div className="flex items-center gap-3 mb-4">
         <div className="flex-1 relative">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-          />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search"
@@ -175,16 +183,13 @@ const MyPitchesContent: React.FC = () => {
                 : "bg-gray-100 font-body text-gray-600 hover:bg-gray-200"
             }`}
           >
-            {chip}
+            {chipLabels[chip]}
           </button>
         ))}
       </div>
 
-      {/* States */}
       {loading && (
-        <p className="text-sm text-gray-400 text-center py-12">
-          Loading pitches…
-        </p>
+        <p className="text-sm text-gray-400 text-center py-12">Loading pitches…</p>
       )}
       {error && (
         <p className="text-sm text-red-500 text-center py-12">{error}</p>
@@ -203,9 +208,7 @@ const MyPitchesContent: React.FC = () => {
           </div>
 
           {filtered.length === 0 && (
-            <p className="text-sm text-gray-400 text-center py-12">
-              No pitches found.
-            </p>
+            <p className="text-sm text-gray-400 text-center py-12">No pitches found.</p>
           )}
 
           {hasMore && (

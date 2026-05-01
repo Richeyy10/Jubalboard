@@ -29,16 +29,20 @@ type ClientProfile = {
 
 interface Brief {
   id: string;
-  title: string;
-  description: string;
-  budget: number;
-  deadline: string;
+  jobTitle: string;
+  jobDescription: string;
+  budgetMin: number;
+  budgetMax: number;
+  deliveryDate: string;
   status: BriefStatus;
-  location: string;
-  category: { id: string; name: string };
+  location: string | null;
+  projectCategoryId: string;
+  category?: { id: string; name: string };
   pitchCount: number;
   referenceFileUrls: string[];
   createdAt: string;
+  currency: string;
+  timeline: string;
 }
 
 const statusStyles: Record<BriefStatus, string> = {
@@ -72,9 +76,11 @@ function formatDate(iso: string) {
   });
 }
 
-function formatBudget(amount: number) {
-  if (!amount) return "—";
-  return `$${amount.toLocaleString()}`;
+function formatBudget(min: number, max: number, currency: string) {
+  const symbol = currency === "NGN" ? "₦" : currency === "EUR" ? "€" : currency === "GBP" ? "£" : "$";
+  if (!min && !max) return "—";
+  if (min && max) return `${symbol}${min.toLocaleString()} - ${symbol}${max.toLocaleString()}`;
+  return `${symbol}${(min || max).toLocaleString()}`;
 }
 
 const MyBriefs: React.FC = () => {
@@ -84,12 +90,11 @@ const MyBriefs: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-
   const [briefs, setBriefs] = useState<Brief[]>([]);
   const [briefsLoading, setBriefsLoading] = useState(true);
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   // Fetch profile
   useEffect(() => {
@@ -115,6 +120,24 @@ const MyBriefs: React.FC = () => {
     fetchProfile();
   }, []);
 
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const tokenRes = await fetch("/api/auth/session/token");
+        const { token } = await tokenRes.json();
+        const res = await fetch("/api/v1/briefs/categories", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        setCategories(Array.isArray(json) ? json : json.data ?? []);
+      } catch {
+        // fail silently
+      }
+    };
+    fetchCategories();
+  }, []);
+
   // Fetch all briefs (one request per status, merged)
   useEffect(() => {
     const fetchBriefs = async () => {
@@ -127,16 +150,17 @@ const MyBriefs: React.FC = () => {
 
         const results = await Promise.all(
           ALL_STATUSES.map((status) =>
-            fetch(
-              `/api/v1/briefs/me?status=${status}`,
-              { headers: { Authorization: `Bearer ${token}` }, credentials: "include" }
-            ).then((r) => r.json())
+            fetch(`/api/v1/briefs/me?status=${status}`, {
+              headers: { Authorization: `Bearer ${token}` },
+              credentials: "include",
+            }).then((r) => r.json())
           )
         );
 
         const all: Brief[] = results.flatMap((json) =>
-          Array.isArray(json) ? json : json.data ?? []
+          Array.isArray(json) ? json : Array.isArray(json.data) ? json.data : []
         );
+
         setBriefs(all);
       } catch {
         // fail silently
@@ -156,13 +180,17 @@ const MyBriefs: React.FC = () => {
     );
   }
 
+  const getCategoryName = (id: string) =>
+    categories.find((c) => c.id === id)?.name ?? "—";
+
   const userName = profile?.clientProfile?.fullName || profile?.name || "Client";
   const userAvatar =
     profile?.clientProfile?.imageUrl ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
 
   const filtered = briefs.filter((b) => {
-    const matchSearch = b.title.toLowerCase().includes(search.toLowerCase());
+    const title = b.jobTitle ?? "";
+    const matchSearch = title.toLowerCase().includes(search.toLowerCase());
     const matchTab = activeTab === "All Briefs" || b.status === activeTab;
     return matchSearch && matchTab;
   });
@@ -266,18 +294,24 @@ const MyBriefs: React.FC = () => {
                   key={brief.id}
                   className="bg-white border border-gray-100 rounded-xl p-4 flex items-center gap-4 shadow-sm"
                 >
-                  {/* Placeholder image since API has no image field */}
                   <img
-                    src={`https://ui-avatars.com/api/?name=${encodeURIComponent(brief.category?.name ?? "B")}&background=f3f4f6&color=555&size=96`}
-                    alt={brief.title}
+                    src={
+                      brief.referenceFileUrls?.[0] ??
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(getCategoryName(brief.projectCategoryId))}&background=f3f4f6&color=555&size=96`
+                    }
+                    alt={brief.jobTitle}
                     className="w-24 h-20 object-cover rounded-lg shrink-0"
                   />
                   <div className="flex-1 min-w-0">
                     <span className="text-xs bg-gray-100 text-black px-2 py-0.5 rounded-full">
-                      {brief.category?.name ?? "—"}
+                      {getCategoryName(brief.projectCategoryId)}
                     </span>
-                    <h3 className="font-bold text-black mt-1 text-[15px]">{brief.title}</h3>
-                    <p className="text-sm text-black mt-0.5 truncate">{brief.description}</p>
+                    <h3 className="font-bold text-black mt-1 text-[15px]">
+                      {brief.jobTitle ?? "Untitled"}
+                    </h3>
+                    <p className="text-sm text-black mt-0.5 truncate">
+                      {brief.jobDescription ?? ""}
+                    </p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-black">
                       <span className="flex items-center gap-1">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,13 +320,13 @@ const MyBriefs: React.FC = () => {
                           <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2" />
                           <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2" />
                         </svg>
-                        {formatDate(brief.deadline)}
+                        {formatDate(brief.deliveryDate)}
                       </span>
                       <span className="flex items-center gap-1">
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeWidth="2" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
                         </svg>
-                        {formatBudget(brief.budget)}
+                        {formatBudget(brief.budgetMin, brief.budgetMax, brief.currency)}
                       </span>
                     </div>
                   </div>
