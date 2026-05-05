@@ -4,13 +4,13 @@ import { BadgeCheck } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useGigStore } from "../../../lib/stores/gigStore";
-import { useBriefs } from "../../../lib/hooks/useBriefs";
+import { useFreshGigs } from "../../../lib/hooks/useFreshGigs";
 import { FreshGig } from "@/app/types";
 
 export default function FreshGigs() {
   const router = useRouter();
   const setSelectedGig = useGigStore((s) => s.setSelectedGig);
-  const { gigs, loading } = useBriefs({ limit: 8 });
+  const { gigs, loading } = useFreshGigs({ limit: 4 });
 
   const handlePitchNow = (gig: FreshGig) => {
     setSelectedGig(gig);
@@ -33,7 +33,7 @@ export default function FreshGigs() {
           ))}
         </div>
       ) : gigs.length === 0 ? (
-        <p className="text-sm text-gray-400 text-center py-10">No gigs available right now.</p>
+        <p className="text-sm text-black text-center py-10">No gigs available right now.</p>
       ) : (
         <div className="flex gap-4 overflow-x-auto lg:overflow-x-visible lg:grid lg:grid-cols-4 pb-2 lg:pb-0 snap-x snap-mandatory scroll-smooth scrollbar-hide">
           {gigs.map((gig) => (

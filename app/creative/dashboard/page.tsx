@@ -13,6 +13,7 @@ import YourPitches from "@/app/components/creative/dashboard/yourPitches";
 import LearningHub from "@/app/components/creative/dashboard/learningHub";
 import QuickActions from "@/app/components/creative/dashboard/quickActions";
 import { useCreativeProfile } from "@/app/lib/hooks/useCreativeProfile";
+import { useMyPitches } from "@/app/lib/hooks/useMyPitches";
 import { freshGigs, todoItems, ongoingGigs, creativePitches, courses } from "../../data";
 import { useKycStatus } from "../../lib/hooks/useKycStatus";
 import KycModal from "../../components/verification/kycModal";
@@ -20,6 +21,7 @@ import KycModal from "../../components/verification/kycModal";
 const CreativeDashboard: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { profile, loading: profileLoading, error } = useCreativeProfile();
+  const { pitches } = useMyPitches();
   const { kycStatus, loading: kycLoading } = useKycStatus();
   const [showKycModal, setShowKycModal] = useState(false);
 
@@ -94,10 +96,10 @@ console.log("kycStatus:", kycStatus, "kycLoading:", kycLoading);
           <SearchBar />
           <QuickActions />
           <FreshGigs />
-          <TodoList todos={todoItems} />
-          <OngoingGigs gigs={ongoingGigs} />
-          <YourPitches pitches={creativePitches} />
-          <LearningHub courses={courses} />
+          <TodoList />
+          <OngoingGigs />
+          <YourPitches />
+          <LearningHub />
         </main>
       </div>
     </div>

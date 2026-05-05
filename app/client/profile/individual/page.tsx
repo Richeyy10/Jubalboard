@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import logo from "../../../assets/logo.png";
-import { Camera, User, ChevronDown, Check, Loader2, BadgeCheck } from "lucide-react";
+import { Camera, User, ChevronDown, Check, Loader2 } from "lucide-react";
 
 type Category = { id: string; name: string };
 
@@ -19,7 +19,6 @@ interface CountryOption {
   phoneCode: string;
   states: StateOption[];
 }
-// --- NEW ---
 interface CurrencyOption {
   id: string;
   code: string;
@@ -69,33 +68,11 @@ const SelectField = ({
   </div>
 );
 
-const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white rounded-2xl px-12 py-10 w-[80%] lg:w-[420px] flex flex-col items-center text-center shadow-2xl">
-      <div className="w-[90px] h-[90px] rounded-full bg-[#2563EB] flex items-center justify-center mb-5">
-        <BadgeCheck size={52} fill="white" stroke="#2563EB" />
-      </div>
-      <h2 className="text-[22px] font-bold text-[#2563EB] m-0 mb-1">Congratulations!</h2>
-      <p className="text-[16px] font-semibold text-[#2563EB] m-0 mb-3">Your profile is complete</p>
-      <p className="text-[14px] text-gray-600 m-0 mb-7 leading-relaxed max-w-[260px]">
-        You can now post projects and connect with the right creatives.
-      </p>
-      <button
-        onClick={onGoToDashboard}
-        className="bg-[#2563EB] border-none rounded-lg px-8 py-2.5 cursor-pointer text-white font-semibold text-[14px] hover:bg-blue-700 transition-colors"
-      >
-        Go to Dashboard
-      </button>
-    </div>
-  </div>
-);
-
 const IndividualProfile: React.FC = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [photo, setPhoto] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -110,7 +87,6 @@ const IndividualProfile: React.FC = () => {
   const [descTouched, setDescTouched] = useState(false);
   const [projectFiles, setProjectFiles] = useState<File[]>([]);
 
-  // --- NEW ---
   const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
 
@@ -121,12 +97,9 @@ const IndividualProfile: React.FC = () => {
     communication: "Chat only", language: "English",
   });
 
-
-  // fetch countries
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
         const response = await fetch('/api/v1/platform/countries', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
@@ -141,11 +114,9 @@ const IndividualProfile: React.FC = () => {
     fetchCountries();
   }, []);
 
-  // --- NEW: fetch currencies ---
   useEffect(() => {
     const fetchCurrencies = async () => {
       try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
         const response = await fetch('/api/v1/platform/currencies', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
@@ -161,7 +132,6 @@ const IndividualProfile: React.FC = () => {
     };
     fetchCurrencies();
   }, []);
-
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -226,10 +196,12 @@ const IndividualProfile: React.FC = () => {
       formData.append("locationCity", form.country);
       formData.append("postalCode", form.postalCode);
       formData.append("streetAddress", form.streetAddress);
-      // formData.append("preferredSocialLink", form.socialLink);
       formData.append("preferredCommunication", commValueMap[form.communication]);
       formData.append("languagePreference", languageValueMap[form.language]);
       selectedCategories.forEach((id) => formData.append("categoriesOfInterest", id));
+
+      const photoFile = fileInputRef.current?.files?.[0];
+      if (photoFile) formData.append("image", photoFile);
 
       const res = await fetch("/api/v1/clients/me/personal-profile", {
         method: "PATCH",
@@ -243,7 +215,15 @@ const IndividualProfile: React.FC = () => {
         throw new Error(errData.message || "Failed to save profile.");
       }
 
-      setShowModal(true);
+      const userData = localStorage.getItem("userData");
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        parsed.profileStatus = "Completed";
+        localStorage.setItem("userData", JSON.stringify(parsed));
+      }
+
+      // Redirect to KYC instead of showing modal
+      router.push("client/kyc");
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred while saving.";
       setError(message);
@@ -255,10 +235,6 @@ const IndividualProfile: React.FC = () => {
 
   return (
     <div className="min-h-screen w-screen pb-5 bg-white font-sans">
-      {showModal && (
-        <CongratulationsModal onGoToDashboard={() => router.push("/client/dashboard")} />
-      )}
-
       {/* Navbar */}
       <div className="flex items-center gap-2.5 px-[42px] bg-[#fafafa] h-[100px] border-b border-gray-200">
         <Image src={logo} alt="Jubal Board logo" width={120} height={120} className="object-contain" />
@@ -299,7 +275,6 @@ const IndividualProfile: React.FC = () => {
 
         <div className="flex flex-col gap-5">
 
-          {/* Row 1 */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Full Name{reqStar}</label>
@@ -316,7 +291,7 @@ const IndividualProfile: React.FC = () => {
                 <input
                   value={phoneNumber}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, ""); // digits only
+                    const val = e.target.value.replace(/[^0-9]/g, "");
                     setPhoneNumber(val);
                   }}
                   placeholder="8012345678"
@@ -327,7 +302,6 @@ const IndividualProfile: React.FC = () => {
             </div>
           </div>
 
-          {/* Row 2 */}
           <div>
             <label className={labelClass}>Country{reqStar}</label>
             <div className="relative">
@@ -372,70 +346,62 @@ const IndividualProfile: React.FC = () => {
             <label className={labelClass}>Postal Code</label>
             <input value={form.postalCode} onChange={(e) => update("postalCode", e.target.value)} placeholder="Type here" className={inputClass} />
           </div>
-        </div>
 
-        {/* Street Address */}
-        <div>
-          <label className={labelClass}>Street Address</label>
-          <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
-        </div>
-
-        {/* Social Link */}
-        <div>
-          <label className={labelClass}>Preferred Social Link</label>
-          <input value={form.socialLink} onChange={(e) => update("socialLink", e.target.value)} placeholder="Type here" className={inputClass} />
-        </div>
-
-        {/* Row 3 */}
-        <div className="grid grid-cols-2 gap-4">
-          <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} required />
-          <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} required />
-        </div>
-
-        {/* Categories */}
-        <div>
-          <label className={labelClass}>Categories of Interest{reqStar}</label>
-          <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
-            {categoriesLoading ? (
-              <div className="flex items-center gap-2 text-[13px] text-gray-400">
-                <Loader2 size={14} className="animate-spin" /> Loading categories...
-              </div>
-            ) : (
-              categories.map((cat) => {
-                const selected = selectedCategories.includes(cat.id);
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => toggleCategory(cat.id)}
-                    className={`px-3.5 py-[7px] rounded-md cursor-pointer border text-[13px] flex items-center gap-1.5 transition-all duration-150
-                        ${selected
-                        ? "bg-white border-gray-300 text-black font-medium"
-                        : "bg-white border-gray-300 text-black font-normal"
-                      }`}
-                  >
-                    {selected && <Check size={12} stroke="#1a1a2e" strokeWidth={3} />}
-                    {cat.name}
-                  </button>
-                );
-              })
-            )}
+          <div>
+            <label className={labelClass}>Street Address</label>
+            <input value={form.streetAddress} onChange={(e) => update("streetAddress", e.target.value)} placeholder="Type your street address" className={inputClass} />
           </div>
+
+          <div>
+            <label className={labelClass}>Preferred Social Link</label>
+            <input value={form.socialLink} onChange={(e) => update("socialLink", e.target.value)} placeholder="Type here" className={inputClass} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <SelectField label="Preferred Communication" value={form.communication} onChange={(v) => update("communication", v)} options={commOptions} required />
+            <SelectField label="Language Preference" value={form.language} onChange={(v) => update("language", v)} options={languages} required />
+          </div>
+
+          <div>
+            <label className={labelClass}>Categories of Interest{reqStar}</label>
+            <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">
+              {categoriesLoading ? (
+                <div className="flex items-center gap-2 text-[13px] text-gray-400">
+                  <Loader2 size={14} className="animate-spin" /> Loading categories...
+                </div>
+              ) : (
+                categories.map((cat) => {
+                  const selected = selectedCategories.includes(cat.id);
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => toggleCategory(cat.id)}
+                      className={`px-3.5 py-[7px] rounded-md cursor-pointer border text-[13px] flex items-center gap-1.5 transition-all duration-150
+                        ${selected ? "bg-white border-gray-300 text-black font-medium" : "bg-white border-gray-300 text-black font-normal"}`}
+                    >
+                      {selected && <Check size={12} stroke="#1a1a2e" strokeWidth={3} />}
+                      {cat.name}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+
+        </div>
+
+        <div className="flex justify-end mt-9">
+          <button
+            onClick={handleSave}
+            disabled={loading}
+            className="bg-[#E2554F] border-none rounded-lg px-12 py-3.5 cursor-pointer text-white font-bold text-[15px] hover:bg-[#d44a44] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : "Save"}
+          </button>
         </div>
 
       </div>
-
-      {/* Save */}
-      <div className="flex justify-end mt-9">
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="bg-[#E2554F] border-none rounded-lg px-12 py-3.5 cursor-pointer text-white font-bold text-[15px] hover:bg-[#d44a44] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {loading ? <><Loader2 className="animate-spin" size={18} /> Saving...</> : "Save"}
-        </button>
-      </div>
-
-    </div >
+    </div>
   );
 };
 

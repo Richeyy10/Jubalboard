@@ -31,13 +31,12 @@ function mapBriefToGig(brief: any): FreshGig {
   };
 }
 
-export function useBriefs({ categoryId, limit = 20 }: UseBriefOptions = {}) {
+export function useFreshGigs({ categoryId, limit = 20 }: UseBriefOptions = {}) {
   const [gigs, setGigs] = useState<FreshGig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (categoryId === undefined) return;
     const fetchBriefs = async () => {
       setLoading(true);
       setError(null);

@@ -113,7 +113,7 @@ const CategoryGigsPage: React.FC = () => {
                 <main className="flex-1 w-full px-4 lg:px-7 py-6 overflow-y-auto">
                     <Breadcrumb crumbs={[
                         { label: "Dashboard", path: "/client/dashboard" },
-                        { label: "Hire A Pro", path: "/client/hire-a-pro" },
+                        { label: "Hire A Pro", path: "/client/explore-skills" },
                         { label: category },
                     ]} />
 

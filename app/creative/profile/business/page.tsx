@@ -23,7 +23,6 @@ interface CountryOption {
   phoneCode: string;
   states: StateOption[];
 }
-// --- NEW ---
 interface CurrencyOption {
   id: string;
   code: string;
@@ -34,7 +33,6 @@ interface CurrencyOption {
 const industries = ["Technology", "Fashion", "Music", "Film", "Architecture", "Food & Culinary", "Health", "Education"];
 const languages = ["English", "French", "Spanish", "Arabic", "Yoruba"];
 const commOptions = ["Chat only", "Email only", "Phone", "Any"];
-const currencies = ["Dollars ($)", "Euros (€)", "Pounds (£)", "Naira (₦)"];
 const budgetRanges = ["$100-$200", "$200-$500", "$500-$1000", "$1000-$5000", "$5000+"];
 
 const commValueMap: Record<string, string> = {
@@ -56,7 +54,6 @@ const reqStar = <span className="text-[#E2554F]"> *</span>;
 const inputClass = "w-full border border-gray-200 rounded-lg px-3.5 py-[11px] text-[13px] text-black outline-none bg-white box-border";
 const labelClass = "text-[13px] font-semibold text-black block mb-1.5";
 
-// ── Select Field ────────────────────────────────────────────────────────────
 const SelectField = ({
   label, value, onChange, options, placeholder,
 }: {
@@ -82,39 +79,15 @@ const SelectField = ({
   </div>
 );
 
-// ── Congratulations Modal ───────────────────────────────────────────────────
-const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white rounded-2xl px-12 py-10 w-[80%] lg:w-[420px] flex flex-col items-center text-center shadow-2xl">
-      <div className="w-[90px] h-[90px] rounded-full bg-[#2563EB] flex items-center justify-center mb-5">
-        <BadgeCheck size={52} fill="white" stroke="#2563EB" />
-      </div>
-      <h2 className="text-[22px] font-bold text-[#2563EB] m-0 mb-1">Congratulations!</h2>
-      <p className="text-[16px] font-semibold text-[#2563EB] m-0 mb-3">Your profile is complete</p>
-      <p className="text-[14px] text-gray-600 m-0 mb-7 leading-relaxed max-w-[260px]">
-        You can now post projects and connect with the right creatives.
-      </p>
-      <button
-        onClick={onGoToDashboard}
-        className="bg-[#2563EB] border-none rounded-lg px-8 py-2.5 cursor-pointer text-white font-semibold text-xs lg:text-[14px] hover:bg-blue-700 transition-colors"
-      >
-        Go to Dashboard
-      </button>
-    </div>
-  </div>
-);
-
-// ── Main Page ───────────────────────────────────────────────────────────────
 const BrandProfile: React.FC = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const projectFilesRef = useRef<HTMLInputElement>(null);
 
   const [brandLogo, setBrandLogo] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // stores IDs
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
 
@@ -126,8 +99,7 @@ const BrandProfile: React.FC = () => {
   const [descTouched, setDescTouched] = useState(false);
   const [projectFiles, setProjectFiles] = useState<File[]>([]);
 
-  // --- NEW ---
-  const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
+  const [currencyOptions, setCurrencyOptions] = useState<CurrencyOption[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
 
   const [form, setForm] = useState({
@@ -136,15 +108,12 @@ const BrandProfile: React.FC = () => {
     registrationNumber: "", taxId: "",
     description: "", postalCode: "",
     language: "English", communication: "Chat only",
-    industry: "", currency: "Dollars ($)",
-    budgetRange: "$100-$200",
+    industry: "", budgetRange: "$100-$200",
   });
 
-  // fetch countries
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
         const response = await fetch('/api/v1/platform/countries', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
@@ -159,17 +128,15 @@ const BrandProfile: React.FC = () => {
     fetchCountries();
   }, []);
 
-  // --- NEW: fetch currencies ---
   useEffect(() => {
     const fetchCurrencies = async () => {
       try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
         const response = await fetch('/api/v1/platform/currencies', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
           if (apiResponse.success && apiResponse.data?.currencies) {
             const active = apiResponse.data.currencies.filter((c: CurrencyOption) => c.isActive);
-            setCurrencies(active);
+            setCurrencyOptions(active);
             if (active.length > 0) setSelectedCurrency(active[0].code);
           }
         }
@@ -180,18 +147,16 @@ const BrandProfile: React.FC = () => {
     fetchCurrencies();
   }, []);
 
-  // Fetch real categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const res = await fetch("/api/v1/categories");
         if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
-        // data may be the array directly, or nested under data.data etc.
         const list: Category[] = Array.isArray(data) ? data : data.data ?? [];
         setCategories(list);
       } catch {
-        // silently fail — categories just won't render
+        // silently fail
       } finally {
         setCategoriesLoading(false);
       }
@@ -215,7 +180,7 @@ const BrandProfile: React.FC = () => {
       const newFiles = files.filter((f) => !existing.includes(f.name));
       return [...prev, ...newFiles];
     });
-    e.target.value = ""; // reset so same file can be re-added if removed
+    e.target.value = "";
   };
 
   const removeProjectFile = (name: string) => {
@@ -225,7 +190,6 @@ const BrandProfile: React.FC = () => {
   const update = (key: string, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  // toggleCategory now works with IDs
   const toggleCategory = (id: string) =>
     setSelectedCategories((prev) =>
       prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
@@ -269,16 +233,14 @@ const BrandProfile: React.FC = () => {
       const formData = new FormData();
       formData.append("businessName", form.businessName);
       formData.append("contactNumber", form.contactNumber);
-      // formData.append("businessLocationCity", form.country);
       formData.append("streetAddress", form.streetAddress);
-      // formData.append("companyWebsite", form.websiteLinks);
       formData.append("businessRegistrationNumber", form.registrationNumber);
       formData.append("taxId", form.taxId);
       formData.append("industrySector", form.industry);
       formData.append("preferredCommunication", commValueMap[form.communication]);
       formData.append("languagePreference", languageValueMap[form.language]);
+      formData.append("currency", selectedCurrency);
 
-      // Send real category IDs
       selectedCategories.forEach((id) => {
         formData.append("categoriesOfInterest", id);
       });
@@ -287,11 +249,14 @@ const BrandProfile: React.FC = () => {
         formData.append("projectFiles", file);
       });
 
+      const logoFile = fileInputRef.current?.files?.[0];
+      if (logoFile) {
+        formData.append("image", logoFile);
+      }
+
       const res = await fetch("/api/v1/creatives/me/business-profile", {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
         body: formData,
       });
@@ -301,7 +266,15 @@ const BrandProfile: React.FC = () => {
         throw new Error(errData.message || "Failed to save profile.");
       }
 
-      setShowModal(true);
+      const userData = localStorage.getItem("userData");
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        parsed.profileStatus = "Completed";
+        localStorage.setItem("userData", JSON.stringify(parsed));
+      }
+
+      // Redirect to KYC instead of showing modal
+      router.push("/creative/kyc");
     } catch (err) {
       const message = err instanceof Error ? err.message : "An error occurred while saving.";
       setError(message);
@@ -313,10 +286,6 @@ const BrandProfile: React.FC = () => {
 
   return (
     <div className="min-h-screen w-screen pb-5 bg-white font-sans">
-      {showModal && (
-        <CongratulationsModal onGoToDashboard={() => router.push("/creative/dashboard")} />
-      )}
-
       {/* Navbar */}
       <div className="flex items-center gap-2.5 px-[42px] bg-[#fafafa] h-[100px] border-b border-gray-200">
         <Image src={logo} alt="Jubal Board logo" width={120} height={120} className="object-contain" />
@@ -326,7 +295,6 @@ const BrandProfile: React.FC = () => {
 
       <div className="max-w-[760px] mx-auto mb-[60px] bg-[#fafafa] rounded-2xl px-12 py-10 shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
 
-        {/* Error Feedback */}
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 mb-6 text-sm text-red-600">
             {error}
@@ -371,7 +339,7 @@ const BrandProfile: React.FC = () => {
                 <input
                   value={phoneNumber}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, ""); // digits only
+                    const val = e.target.value.replace(/[^0-9]/g, "");
                     setPhoneNumber(val);
                   }}
                   placeholder="8012345678"
@@ -464,10 +432,7 @@ const BrandProfile: React.FC = () => {
               {projectFiles.length > 0 && (
                 <div className="mt-3 flex flex-col gap-2">
                   {projectFiles.map((file) => (
-                    <div
-                      key={file.name}
-                      className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2"
-                    >
+                    <div key={file.name} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-gray-500 uppercase">
                           {file.name.split(".").pop()}
@@ -505,10 +470,7 @@ const BrandProfile: React.FC = () => {
                   : ""
                   }`}
               />
-              <div className={`text-right text-[11px] mt-1 ${form.description.trim().length < 50
-                ? "text-red-400"
-                : "text-green-500"
-                }`}>
+              <div className={`text-right text-[11px] mt-1 ${form.description.trim().length < 50 ? "text-red-400" : "text-green-500"}`}>
                 {form.description.trim().length}/50 min
                 {form.description.trim().length >= 50 && " ✓"}
               </div>
@@ -539,10 +501,8 @@ const BrandProfile: React.FC = () => {
                   className={`${inputClass} appearance-none pr-9 cursor-pointer`}
                 >
                   <option value="" disabled>Select currency</option>
-                  {currencies.map((c) => (
-                    <option key={c.id} value={c.code}>
-                      {c.code} ({c.symbol})
-                    </option>
+                  {currencyOptions.map((c) => (
+                    <option key={c.id} value={c.code}>{c.code} ({c.symbol})</option>
                   ))}
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -552,7 +512,6 @@ const BrandProfile: React.FC = () => {
             </div>
           </div>
 
-          {/* Categories — now fetched from API */}
           <div>
             <label className={labelClass}>Pick Categories where your business shines{reqStar}</label>
             <div className="border border-gray-200 rounded-[10px] p-4 flex flex-wrap gap-2.5">

@@ -4,29 +4,7 @@ import { Search, SlidersHorizontal, ChevronDown } from "lucide-react";
 import Breadcrumb from "@/app/components/creative/dashboard/breadcrumb";
 import PitchCard from "./pitchCard";
 import { CreativePitch } from "@/app/types";
-
-interface ApiBrief {
-  id: string;
-  jobTitle: string;
-  budgetMin: number;
-  budgetMax: number;
-  currency?: string;
-  status?: string;
-}
-
-interface ApiPitch {
-  id: string;
-  briefId: string;
-  creativeId: string;
-  coverNote: string;
-  proposedAmount: number;
-  deliveryDate?: string;
-  currency?: string;
-  status: string;
-  brief?: ApiBrief;
-  createdAt: string;
-  updatedAt: string;
-}
+import { useMyPitches } from "@/app/lib/hooks/useMyPitches";
 
 const filterChips = ["All Pitches", "PENDING", "APPROVED", "REJECTED"];
 const chipLabels: Record<string, string> = {
@@ -35,101 +13,22 @@ const chipLabels: Record<string, string> = {
   APPROVED: "Approved",
   REJECTED: "Rejected",
 };
-const ALL_STATUSES = ["PENDING", "APPROVED", "REJECTED"];
 const PAGE_SIZE = 6;
 
 const MyPitchesContent: React.FC = () => {
   const [activeChip, setActiveChip] = useState("All Pitches");
   const [search, setSearch] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [pitches, setPitches] = useState<CreativePitch[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchPitches = useCallback(async (chip: string) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const tokenRes = await fetch("/api/auth/session/token");
-      const { token } = await tokenRes.json();
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      };
+  const { pitches, loading, error } = useMyPitches();
 
-      let list: ApiPitch[] = [];
-
-      if (chip === "All Pitches") {
-        const results = await Promise.all(
-          ALL_STATUSES.map((status) =>
-            fetch(`/api/v1/pitches/me?status=${status}`, {
-              credentials: "include",
-              headers,
-            }).then((r) => r.json())
-          )
-        );
-        list = results.flatMap((data) =>
-          Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : []
-        );
-      } else {
-        const res = await fetch(`/api/v1/pitches/me?status=${chip}`, {
-          credentials: "include",
-          headers,
-        });
-        if (!res.ok) throw new Error(`Failed to fetch pitches (${res.status})`);
-        const data = await res.json();
-        list = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
-      }
-
-      const mapped: CreativePitch[] = list.map((p) => ({
-        id: p.id,
-        gigTitle: p.brief?.jobTitle ?? "Untitled",
-        category: "—",
-        budget: p.brief?.budgetMin
-          ? `$${p.brief.budgetMin.toLocaleString()} - $${p.brief.budgetMax.toLocaleString()}`
-          : `$${p.proposedAmount.toLocaleString()}`,
-        timeline: p.deliveryDate
-          ? new Date(p.deliveryDate).toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "short",
-              year: "numeric",
-            })
-          : "—",
-        description: p.coverNote ?? "",
-        image: "",
-        sentAt: new Date(p.createdAt).toLocaleString("en-GB", {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        status: p.status.toLowerCase() as CreativePitch["status"],
-        client: {
-          id: "",
-          name: "Client",
-          avatar: `https://ui-avatars.com/api/?name=CL&background=1a1a2e&color=fff&size=128`,
-          verified: false,
-          isOnline: false,
-        },
-      }));
-
-      setPitches(mapped);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPitches(activeChip);
-    setVisibleCount(PAGE_SIZE);
-  }, [activeChip, fetchPitches]);
-
-  const filtered = pitches.filter((pitch) =>
-    (pitch.gigTitle ?? "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = pitches.filter((pitch) => {
+    const matchesSearch = (pitch.gigTitle ?? "").toLowerCase().includes(search.toLowerCase());
+    const matchesChip =
+      activeChip === "All Pitches" ||
+      pitch.status.toUpperCase() === activeChip;
+    return matchesSearch && matchesChip;
+  });
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;

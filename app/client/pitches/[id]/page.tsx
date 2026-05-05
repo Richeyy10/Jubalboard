@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "@/app/components/client/dashboard/sideBar";
 import DashboardTopbar from "@/app/components/client/dashboard/dashboardTopbar";
 import Breadcrumb from "@/app/components/client/my-desk/breadcrumb";
@@ -101,9 +101,8 @@ const ConfirmModal: React.FC<{
         <button
           onClick={onConfirm}
           disabled={loading}
-          className={`flex-1 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${
-            type === "accept" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"
-          }`}
+          className={`flex-1 text-white rounded-lg py-2.5 text-sm font-semibold transition-colors disabled:opacity-60 ${type === "accept" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600"
+            }`}
         >
           {loading ? "Processing..." : type === "accept" ? "Yes, Accept" : "Yes, Reject"}
         </button>
@@ -124,6 +123,9 @@ const PitchDetailPage: React.FC = () => {
   const [confirmModal, setConfirmModal] = useState<"accept" | "reject" | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const passedName = searchParams.get("name");
+  const passedAvatar = searchParams.get("avatar");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -170,6 +172,9 @@ const PitchDetailPage: React.FC = () => {
         credentials: "include",
       });
 
+      const responseData = await res.json();
+      console.log("Accept/Reject response:", JSON.stringify(responseData, null, 2));
+
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.message ?? `Failed to ${type} pitch.`);
@@ -211,8 +216,11 @@ const PitchDetailPage: React.FC = () => {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
 
   const creativeAvatar =
+    passedAvatar ||
     pitch.creative?.avatarUrl ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(pitch.creative?.name ?? "C")}&background=1a1a2e&color=fff&size=128`;
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(pitch.creative?.name ?? passedName ?? "C")}&background=1a1a2e&color=fff&size=128`;
+
+  const creativeName = pitch.creative?.name ?? passedName ?? "Creative";
 
   const isPending = pitch.status === "PENDING";
 
@@ -274,13 +282,12 @@ const PitchDetailPage: React.FC = () => {
                 </p>
               </div>
             </div>
-            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${
-              pitch.status === "ACCEPTED"
-                ? "bg-green-100 text-green-600"
-                : pitch.status === "REJECTED"
-                  ? "bg-red-100 text-red-500"
-                  : "bg-yellow-100 text-yellow-600"
-            }`}>
+            <span className={`text-xs font-semibold px-3 py-1.5 rounded-full ${pitch.status === "ACCEPTED"
+              ? "bg-green-100 text-green-600"
+              : pitch.status === "REJECTED"
+                ? "bg-red-100 text-red-500"
+                : "bg-yellow-100 text-yellow-600"
+              }`}>
               {pitch.status}
             </span>
           </div>
@@ -307,7 +314,7 @@ const PitchDetailPage: React.FC = () => {
               <div className="bg-[#fafafa] rounded-xl p-5 flex items-center gap-4">
                 <img
                   src={creativeAvatar}
-                  alt={pitch.creative?.name}
+                  alt={creativeName}
                   className="w-16 h-16 rounded-full object-cover shrink-0"
                 />
                 <div className="flex-1">
@@ -415,9 +422,8 @@ const PitchDetailPage: React.FC = () => {
               )}
 
               {!isPending && (
-                <div className={`rounded-xl p-4 text-center text-sm font-semibold ${
-                  pitch.status === "ACCEPTED" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
-                }`}>
+                <div className={`rounded-xl p-4 text-center text-sm font-semibold ${pitch.status === "ACCEPTED" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-500"
+                  }`}>
                   {pitch.status === "ACCEPTED"
                     ? "✓ You accepted this pitch"
                     : "✗ You rejected this pitch"

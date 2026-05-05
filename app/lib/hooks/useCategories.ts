@@ -34,10 +34,9 @@ export function useCategories() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144";
         const token = localStorage.getItem("token");
 
-        const res = await fetch(`${baseUrl}/api/v1/categories`, {
+        const res = await fetch('/api/v1/categories', {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),

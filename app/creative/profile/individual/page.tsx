@@ -7,7 +7,6 @@ import logo from "../../../assets/logo.png";
 import {
   Camera, User, Calendar, MapPin, Upload, ChevronDown, Check, Loader2,
 } from "lucide-react";
-import { Dashhboard } from "@/app/icons";
 import { ApiError } from "../../../lib/api";
 
 const languages = ["English", "French", "Spanish", "Arabic", "Yoruba"];
@@ -38,7 +37,6 @@ interface CountryOption {
   phoneCode: string;
   states: StateOption[];
 }
-// --- NEW ---
 interface CurrencyOption {
   id: string;
   code: string;
@@ -83,24 +81,11 @@ const SelectField = ({ label, value, onChange, options, placeholder }: any) => (
   </div>
 );
 
-const CongratulationsModal: React.FC<{ onGoToDashboard: () => void }> = ({ onGoToDashboard }) => (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-    <div className="bg-white rounded-2xl px-12 py-10 w-[80%] lg:w-[420px] flex flex-col items-center text-center shadow-2xl">
-      <div className="w-[90px] h-[90px] rounded-full bg-[#2196F3] flex items-center justify-center mb-5"><Dashhboard /></div>
-      <h2 className="text-[24px] font-heading font-bold text-[#2196F3] m-0 mb-1">Congratulations!</h2>
-      <p className="text-[20px] font-heading font-semibold text-[#2196F3] m-0 mb-3">Your profile is complete</p>
-      <p className="text-[14px] font-body text-black m-0 mb-7 leading-relaxed max-w-[260px]">You can now post projects and connect with the right creatives.</p>
-      <button onClick={onGoToDashboard} className="bg-[#2196F3] border-none rounded-lg px-8 py-2.5 cursor-pointer text-white font-semibold text-xs lg:text-[14px] hover:bg-blue-700 transition-colors">Go to Dashboard</button>
-    </div>
-  </div>
-);
-
 const TellUsAboutYou: React.FC = () => {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const projectFilesRef = useRef<HTMLInputElement>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [availableCategories, setAvailableCategories] = useState<Array<{ id: string, name: string }>>([]);
   const [loading, setLoading] = useState(false);
@@ -114,7 +99,6 @@ const TellUsAboutYou: React.FC = () => {
   const [descTouched, setDescTouched] = useState(false);
   const [projectFiles, setProjectFiles] = useState<File[]>([]);
 
-  // --- NEW ---
   const [currencies, setCurrencies] = useState<CurrencyOption[]>([]);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("");
 
@@ -129,11 +113,9 @@ const TellUsAboutYou: React.FC = () => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  // fetch countries
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
         const response = await fetch('/api/v1/platform/countries', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
@@ -148,11 +130,9 @@ const TellUsAboutYou: React.FC = () => {
     fetchCountries();
   }, []);
 
-  // --- NEW: fetch currencies ---
   useEffect(() => {
     const fetchCurrencies = async () => {
       try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
         const response = await fetch('/api/v1/platform/currencies', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
@@ -169,11 +149,9 @@ const TellUsAboutYou: React.FC = () => {
     fetchCurrencies();
   }, []);
 
-  // fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://16.171.168.144:3000";
         const response = await fetch('/api/v1/categories', { credentials: "include" });
         if (response.ok) {
           const apiResponse = await response.json();
@@ -212,7 +190,7 @@ const TellUsAboutYou: React.FC = () => {
       const newFiles = files.filter((f) => !existing.includes(f.name));
       return [...prev, ...newFiles];
     });
-    e.target.value = ""; // reset so same file can be re-added if removed
+    e.target.value = "";
   };
 
   const removeProjectFile = (name: string) => {
@@ -249,7 +227,6 @@ const TellUsAboutYou: React.FC = () => {
       formData.append("languagePreference", languageApiMap[form.language] || "en");
       formData.append("preferredCommunication", commApiMap[form.communication] || "CHAT_ONLY");
       formData.append("professionalRole", form.professionalRole);
-      // --- CHANGED: send selectedCurrency code directly ---
       formData.append("currency", selectedCurrency);
       formData.append("rateType", rateTypeApiMap[form.rateType] || "HOURLY");
 
@@ -268,9 +245,7 @@ const TellUsAboutYou: React.FC = () => {
 
       const res = await fetch("/api/v1/creatives/me/personal-profile", {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
         credentials: "include",
       });
@@ -287,7 +262,8 @@ const TellUsAboutYou: React.FC = () => {
         localStorage.setItem("userData", JSON.stringify(parsed));
       }
 
-      setShowModal(true);
+      // Redirect to KYC instead of showing modal
+      router.push("/creative/kyc");
     } catch (err) {
       console.error("Save error:", err);
       if (err instanceof ApiError) setError((err.data as any)?.message || "Failed to save.");
@@ -301,8 +277,6 @@ const TellUsAboutYou: React.FC = () => {
 
   return (
     <div className="min-h-screen w-screen pb-5 bg-white font-sans">
-      {showModal && <CongratulationsModal onGoToDashboard={() => router.push("/creative/dashboard")} />}
-
       <div className="flex items-center gap-2.5 px-[42px] bg-[#fafafa] h-[100px] border-b border-gray-200">
         <Image src={logo} alt="Jubal Board logo" width={120} height={120} className="object-contain" />
       </div>
@@ -383,7 +357,7 @@ const TellUsAboutYou: React.FC = () => {
                 <input
                   value={phoneNumber}
                   onChange={(e) => {
-                    const val = e.target.value.replace(/[^0-9]/g, ""); // digits only
+                    const val = e.target.value.replace(/[^0-9]/g, "");
                     setPhoneNumber(val);
                   }}
                   placeholder="8012345678"
@@ -458,10 +432,7 @@ const TellUsAboutYou: React.FC = () => {
                   : ""
                   }`}
               />
-              <div className={`text-right text-[11px] mt-1 ${form.description.trim().length < 50
-                ? "text-red-400"
-                : "text-green-500"
-                }`}>
+              <div className={`text-right text-[11px] mt-1 ${form.description.trim().length < 50 ? "text-red-400" : "text-green-500"}`}>
                 {form.description.trim().length}/50 min
                 {form.description.trim().length >= 50 && " ✓"}
               </div>
@@ -508,10 +479,7 @@ const TellUsAboutYou: React.FC = () => {
               {projectFiles.length > 0 && (
                 <div className="mt-3 flex flex-col gap-2">
                   {projectFiles.map((file) => (
-                    <div
-                      key={file.name}
-                      className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2"
-                    >
+                    <div key={file.name} className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2">
                       <div className="flex items-center gap-2 min-w-0">
                         <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0 text-[10px] font-bold text-gray-500 uppercase">
                           {file.name.split(".").pop()}
@@ -534,7 +502,6 @@ const TellUsAboutYou: React.FC = () => {
               )}
             </div>
 
-            {/* --- CHANGED: Currency dropdown from API --- */}
             <div>
               <label className={labelClass}>Select your currency{reqStar}</label>
               <div className="relative">
@@ -545,9 +512,7 @@ const TellUsAboutYou: React.FC = () => {
                 >
                   <option value="" disabled>Select currency</option>
                   {currencies.map((c) => (
-                    <option key={c.id} value={c.code}>
-                      {c.code} ({c.symbol})
-                    </option>
+                    <option key={c.id} value={c.code}>{c.code} ({c.symbol})</option>
                   ))}
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
