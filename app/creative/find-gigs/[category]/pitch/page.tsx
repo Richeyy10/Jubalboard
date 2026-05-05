@@ -30,6 +30,7 @@ const CalendarIcon = () => (
 );
 
 const timelineOptions = ["Less than 24 hours", "1–2 days", "3–5 days", "1 week", "2 weeks"];
+const COVER_NOTE_MAX = 500;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -76,6 +77,19 @@ const emptyMilestone = (): Milestone => ({
   notes: "",
 });
 
+// Format ISO date string to "23 May 2026"
+function formatDate(iso: string) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// Get today's date in YYYY-MM-DD for min attribute
+function todayString() {
+  return new Date().toISOString().split("T")[0];
+}
+
 export default function MyPitchPage() {
   const params = useParams();
   const category = decodeURIComponent(params.category as string);
@@ -90,20 +104,17 @@ export default function MyPitchPage() {
   const [coverNote, setCoverNote] = useState("");
   const [timeline, setTimeline] = useState("Less than 24 hours");
   const [deliveryDate, setDeliveryDate] = useState("");
-  const [proposedAmount, setProposedAmount] = useState("");
-  const [paymentMode, setPaymentMode] = useState<"MILESTONE" | "FLAT">("FLAT");
+  const [proposedAmount, setProposedAmount] = useState(""); // no pre-fill
+  const [paymentMode, setPaymentMode] = useState<"MILESTONE" | "END_OF_PROJECT">("END_OF_PROJECT");
   const [isCollaborative, setIsCollaborative] = useState(false);
   const [milestones, setMilestones] = useState<Milestone[]>([emptyMilestone()]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const { profile, loading: profileLoading } = useCreativeProfile();
   const { kycStatus } = useKycStatus();
 
   useEffect(() => {
     if (!gig) router.replace("/creative/find-gigs");
-  }, [gig]);
-
-  useEffect(() => {
-    if (gig?.budget) setProposedAmount(gig.budget.replace(/[^0-9.]/g, ""));
   }, [gig]);
 
   if (!gig) return null;
@@ -124,7 +135,7 @@ export default function MyPitchPage() {
     { label: "Set your Budget", value: gig.budget },
     { label: "Attach Reference File", value: gig.referenceFile ?? "None", isFile: !!gig.referenceFile },
     { label: "Timeline", value: gig.timeline },
-    { label: "Delivery Date", value: gig.deliveryDate ?? "—" },
+    { label: "Delivery Date", value: formatDate(gig.deliveryDate ?? "") },
   ];
 
   const updateMilestone = (index: number, field: keyof Milestone, value: string) => {
@@ -143,6 +154,7 @@ export default function MyPitchPage() {
     if (!coverNote.trim()) return setError("Please write a cover note.");
     if (!proposedAmount) return setError("Please enter your proposed amount.");
     if (!deliveryDate) return setError("Please set a delivery date.");
+    if (deliveryDate < todayString()) return setError("Delivery date cannot be in the past.");
     if (paymentMode === "MILESTONE" && milestones.some((m) => !m.title || !m.amount || !m.dueDate)) {
       return setError("Please fill in all milestone fields (title, amount, due date).");
     }
@@ -162,27 +174,24 @@ export default function MyPitchPage() {
         isCollaborative,
         milestones: paymentMode === "MILESTONE"
           ? milestones.map((m) => ({
-            title: m.title,
-            description: m.description,
-            amount: parseFloat(m.amount),
-            dueDate: m.dueDate,
-            notes: m.notes,
-          }))
+              title: m.title,
+              description: m.description,
+              amount: parseFloat(m.amount),
+              dueDate: m.dueDate,
+              notes: m.notes,
+            }))
           : [],
       };
 
-      const res = await fetch(
-        `/api/v1/pitches`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(body),
-        }
-      );
+      const res = await fetch(`/api/v1/pitches`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -196,11 +205,11 @@ export default function MyPitchPage() {
       setSubmitting(false);
     }
   };
+
   const userName = profile?.fullName || "Creative";
   const userAvatar =
     profile?.avatar ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
-
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -267,13 +276,12 @@ export default function MyPitchPage() {
                   <p className="font-semibold text-black text-lg">{userName}</p>
                   <p className="text-sm text-green-500 font-medium mt-0.5">● Online</p>
                   <p className="text-sm text-black mt-2">Verification Status:</p>
-                  <span className={`inline-block mt-1 p-2 text-white text-xs font-semibold ${kycStatus === "PROVIDER_APPROVED" ? "bg-green-600" :
-                      kycStatus === "PENDING" ? "bg-yellow-500" :
-                        "bg-gray-400"
-                    }`}>
+                  <span className={`inline-block mt-1 p-2 text-white text-xs font-semibold ${
+                    kycStatus === "PROVIDER_APPROVED" ? "bg-green-600" :
+                    kycStatus === "PENDING" ? "bg-yellow-500" : "bg-gray-400"
+                  }`}>
                     {kycStatus === "PROVIDER_APPROVED" ? "Verified" :
-                      kycStatus === "PENDING" ? "Pending" :
-                        "Unverified"}
+                     kycStatus === "PENDING" ? "Pending" : "Unverified"}
                   </span>
                 </div>
               </div>
@@ -353,10 +361,15 @@ export default function MyPitchPage() {
           <Section title="Cover Note">
             <textarea
               value={coverNote}
-              onChange={(e) => setCoverNote(e.target.value)}
+              onChange={(e) => {
+                if (e.target.value.length <= COVER_NOTE_MAX) setCoverNote(e.target.value);
+              }}
               placeholder="Give the client your take: the idea, the vibe, and how you'll execute it"
               className="w-full h-32 px-4 py-3 text-sm bg-white text-black placeholder-grey-800 border border-black rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-[#e84545]/20 focus:border-[#e84545]/40 transition-all"
             />
+            <div className={`text-right text-xs mt-1 ${coverNote.length >= COVER_NOTE_MAX ? "text-red-500" : "text-gray-400"}`}>
+              {coverNote.length}/{COVER_NOTE_MAX}
+            </div>
           </Section>
 
           {/* Deliverables */}
@@ -377,28 +390,29 @@ export default function MyPitchPage() {
           {/* Payment Mode + Collaborative Toggle */}
           <Section title="Payment Settings">
             <div className="flex flex-col gap-5">
-
-              {/* Payment Mode */}
               <div>
                 <label className="block text-xs text-gray-500 font-medium mb-2">Payment Mode</label>
                 <div className="flex gap-3">
-                  {(["FLAT", "MILESTONE"] as const).map((mode) => (
+                  {([
+                    { value: "END_OF_PROJECT", label: "Flat Payment" },
+                    { value: "MILESTONE", label: "Milestone" },
+                  ] as const).map((mode) => (
                     <button
-                      key={mode}
+                      key={mode.value}
                       type="button"
-                      onClick={() => setPaymentMode(mode)}
-                      className={`px-5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${paymentMode === mode
-                        ? "bg-[#e84545] text-white border-[#e84545]"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-[#e84545]"
-                        }`}
+                      onClick={() => setPaymentMode(mode.value)}
+                      className={`px-5 py-2.5 rounded-lg text-sm font-semibold border transition-colors ${
+                        paymentMode === mode.value
+                          ? "bg-[#e84545] text-white border-[#e84545]"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-[#e84545]"
+                      }`}
                     >
-                      {mode === "FLAT" ? "Flat Payment" : "Milestone"}
+                      {mode.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Collaborative Toggle */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-black">Collaborative Project</p>
@@ -407,22 +421,19 @@ export default function MyPitchPage() {
                 <button
                   type="button"
                   onClick={() => setIsCollaborative((prev) => !prev)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${isCollaborative ? "bg-[#e84545]" : "bg-gray-200"
-                    }`}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${isCollaborative ? "bg-[#e84545]" : "bg-gray-200"}`}
                 >
                   <span
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isCollaborative ? "translate-x-7" : "translate-x-1"
-                      }`}
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${isCollaborative ? "translate-x-7" : "translate-x-1"}`}
                   />
                 </button>
               </div>
-
             </div>
           </Section>
 
           {/* Pricing */}
           <Section title="Pricing">
-            <div className="relative">
+            <div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-black font-medium">{gig.currency ?? "USD"}</span>
                 <input
@@ -430,6 +441,7 @@ export default function MyPitchPage() {
                   value={proposedAmount}
                   onChange={(e) => setProposedAmount(e.target.value)}
                   placeholder="Enter your proposed amount"
+                  min={0}
                   className="flex-1 px-4 py-2.5 text-sm text-black border border-black rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
                 />
               </div>
@@ -465,6 +477,7 @@ export default function MyPitchPage() {
                   <input
                     type="date"
                     value={deliveryDate}
+                    min={todayString()}
                     onChange={(e) => setDeliveryDate(e.target.value)}
                     className="w-full px-3 py-2.5 text-sm text-black border border-black rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#e84545]/20 pr-9"
                   />
@@ -473,7 +486,7 @@ export default function MyPitchPage() {
                   </div>
                 </div>
                 {gig.deliveryDate && (
-                  <p className="text-xs text-gray-400 mt-1.5">Client's deadline: {gig.deliveryDate}</p>
+                  <p className="text-xs text-gray-400 mt-1.5">Client's deadline: {formatDate(gig.deliveryDate)}</p>
                 )}
               </div>
             </div>
@@ -488,10 +501,7 @@ export default function MyPitchPage() {
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-sm font-semibold text-black">Milestone {i + 1}</p>
                       {milestones.length > 1 && (
-                        <button
-                          onClick={() => removeMilestone(i)}
-                          className="text-red-400 hover:text-red-600 text-xs"
-                        >
+                        <button onClick={() => removeMilestone(i)} className="text-red-400 hover:text-red-600 text-xs">
                           Remove
                         </button>
                       )}
@@ -521,6 +531,7 @@ export default function MyPitchPage() {
                         <input
                           type="date"
                           value={m.dueDate}
+                          min={todayString()}
                           onChange={(e) => updateMilestone(i, "dueDate", e.target.value)}
                           className="w-full px-3 py-2 text-sm text-black border border-black rounded-lg focus:outline-none focus:ring-2 focus:ring-[#e84545]/20"
                         />
@@ -546,10 +557,7 @@ export default function MyPitchPage() {
                     </div>
                   </div>
                 ))}
-                <button
-                  onClick={addMilestone}
-                  className="text-sm text-[#e84545] font-semibold hover:underline text-left"
-                >
+                <button onClick={addMilestone} className="text-sm text-[#e84545] font-semibold hover:underline text-left">
                   + Add another milestone
                 </button>
               </div>

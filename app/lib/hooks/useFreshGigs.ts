@@ -9,23 +9,27 @@ type UseBriefOptions = {
 function mapBriefToGig(brief: any): FreshGig {
   return {
     id: brief.id,
-    title: brief.jobTitle ?? "Untitled",
+    title: brief.jobTitle ?? brief.title ?? "Untitled",
     category: brief.category?.name ?? "General",
-    budget: brief.budgetMin != null && brief.budgetMax != null
-      ? `${brief.currency ?? ""}${brief.budgetMin.toLocaleString()} - ${brief.currency ?? ""}${brief.budgetMax.toLocaleString()}`
-      : "—",
+    budget:
+      brief.budgetMin != null && brief.budgetMax != null
+        ? `${brief.currency ?? ""}${brief.budgetMin.toLocaleString()} - ${brief.currency ?? ""}${brief.budgetMax.toLocaleString()}`
+        : brief.budget ?? "—",
     timeline: brief.timeline ?? "—",
-    description: brief.jobDescription ?? "",
+    description: brief.jobDescription ?? brief.description ?? "",
     image: brief.referenceFileUrls?.[0] ?? undefined,
     isPremium: brief.client?.isHighValue ?? false,
-    deliveryDate: brief.deliveryDate ?? "",
+    deliveryDate: brief.deliveryDate ?? brief.deadline ?? "",
     currency: brief.currency ?? "USD",
     skills: brief.skills?.map((s: any) => s.name).join(", ") ?? "",
     postedBy: {
       name: brief.client?.name ?? "Client",
       avatar:
+        brief.client?.imageUrl ??
         brief.client?.avatarUrl ??
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(brief.client?.name ?? "Client")}&background=1a1a2e&color=fff&size=128`,
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(
+          brief.client?.name ?? "Client"
+        )}&background=1a1a2e&color=fff&size=128`,
       verified: brief.client?.isHighValue ?? false,
     },
   };
@@ -49,12 +53,36 @@ export function useFreshGigs({ categoryId, limit = 20 }: UseBriefOptions = {}) {
         if (categoryId) params.set("categoryId", categoryId);
         params.set("limit", String(limit));
 
-        const res = await fetch(`/api/v1/briefs?${params.toString()}`, { headers, credentials: "include" });
+        // Step 1: fetch the list
+        const res = await fetch(`/api/v1/briefs?${params.toString()}`, {
+          headers,
+          credentials: "include",
+        });
         const json = await res.json();
-        console.log("Raw brief response:", JSON.stringify(json.data?.[0], null, 2));
-        const list = Array.isArray(json.data) ? json.data : Array.isArray(json) ? json : [];
+        const list: any[] = Array.isArray(json.data)
+          ? json.data
+          : Array.isArray(json)
+          ? json
+          : [];
 
-        setGigs(list.map(mapBriefToGig));
+        // Step 2: fetch full details for each brief in parallel to get client info
+        const detailed = await Promise.all(
+          list.map(async (brief) => {
+            try {
+              const r = await fetch(`/api/v1/briefs/${brief.id}`, {
+                headers,
+                credentials: "include",
+              });
+              if (r.ok) {
+                const json = await r.json();
+                return json.data ?? json; // unwrap { success, data, message }
+              }
+            } catch {}
+            return brief; // fallback to list data if detail fetch fails
+          })
+        );
+
+        setGigs(detailed.map(mapBriefToGig));
       } catch {
         setError("Failed to load briefs.");
       } finally {
