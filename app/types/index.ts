@@ -102,6 +102,7 @@ export type FreshGig = {
 export interface TodoItem {
   id: string;
   title: string;
+  progress?: number;
   type: string;
   actionLabel: string;
   isCompleted: boolean;

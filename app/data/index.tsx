@@ -281,8 +281,8 @@ export const freshGigs: FreshGig[] = [
 ];
 
 export const todoItems: TodoItem[] = [
-  { id: "1", title: "Continue your pitch for Alien Job", progress: 70 },
-  { id: "2", title: "Upload Milestone 1 for Charles Eden", progress: 70 },
+  { id: "1", title: "Continue your pitch for Alien Job", progress: 70, type: "task", actionLabel: "Continue", isCompleted: false },
+  { id: "2", title: "Upload Milestone 1 for Charles Eden", progress: 70, type: "task", actionLabel: "Upload", isCompleted: false },
 ];
 
 export const ongoingGigs: OngoingGig[] = [
