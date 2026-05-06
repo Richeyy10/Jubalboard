@@ -133,11 +133,11 @@ const ClientDashboard: React.FC = () => {
           <WelcomeBar userName={userName} />
           <SearchBar />
           <QuickActions />
-          <SuggestedCreatives creatives={suggestedCreatives} />
+          <SuggestedCreatives />
           <ServicesCarousel services={services} />
           <div className="lg:flex gap-6">
-            <ActiveProjects projects={activeProjects} />
-            <IncomingPitches pitches={incomingPitches} />
+            <ActiveProjects />
+            <IncomingPitches />
           </div>
         </main>
       </div>

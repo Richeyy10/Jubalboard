@@ -12,18 +12,22 @@ interface ApiGig {
   title: string;
   status: string;
   agreedAmount: number;
-  netEarnings: number;
-  startedAt: string;
-  deadline: string;
-  client: {
-    id: string;
-    name: string;
-    avatarUrl: string | null;
-  };
-  escrowStatus: string;
-  revisionsUsed: number;
-  revisionsAllowed: number;
-  createdAt: string;
+  clientId: string;
+  clientName: string;
+  collabDeadline: string | null;
+  paymentMode: string;
+  requiredCollaborators: number;
+}
+
+interface ApiGigDetail {
+  id: string;
+  title: string;
+  status: string;
+  agreedAmount: number;
+  dueDate: string | null;
+  clientId: string;
+  progressPercentage: number;
+  collabDeadline: string | null;
 }
 
 const filterChips = ["All Gigs", "Active", "Recent", "Completed", "Revised", "Partially Completed", "On Collab"];
@@ -38,7 +42,6 @@ const chipToFilter: Record<string, string> = {
   "On Collab": "on_collab",
 };
 
-// Map API status → MyGig status
 const apiStatusToMyGig = (status: string): MyGig["status"] => {
   const map: Record<string, MyGig["status"]> = {
     IN_PROGRESS: "In Progress",
@@ -47,11 +50,11 @@ const apiStatusToMyGig = (status: string): MyGig["status"] => {
     COLLABORATING: "Collaborating",
     PARTIALLY_COMPLETED: "Partially Completed",
     ACTIVE: "Active",
+    PENDING_PAYMENT: "Active",
   };
   return map[status] ?? "Active";
 };
 
-// Calculate dueIn string from deadline
 const getDueIn = (deadline: string): string => {
   const diff = new Date(deadline).getTime() - Date.now();
   if (diff <= 0) return "0 days 00hrs 00mins";
@@ -61,11 +64,11 @@ const getDueIn = (deadline: string): string => {
   return `${days} day${days !== 1 ? "s" : ""} ${String(hours).padStart(2, "0")}hrs ${String(mins).padStart(2, "0")}mins`;
 };
 
-// Derive progress % from status
 const getProgress = (status: string): number => {
   const map: Record<string, number> = {
     IN_PROGRESS: 60,
     ACTIVE: 30,
+    PENDING_PAYMENT: 20,
     PARTIALLY_COMPLETED: 75,
     REVISED: 90,
     COLLABORATING: 50,
@@ -92,16 +95,13 @@ const MyGigsContent: React.FC = () => {
       const { token } = await tokenRes.json();
 
       const params = new URLSearchParams({ filter });
-      const res = await fetch(
-        `/api/v1/projects/creative?${params.toString()}`,
-        {
-          credentials: "include",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const res = await fetch(`/api/v1/projects/creative?${params.toString()}`, {
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (!res.ok) throw new Error(`Failed to fetch gigs (${res.status})`);
 
@@ -109,18 +109,54 @@ const MyGigsContent: React.FC = () => {
       const list: ApiGig[] = Array.isArray(json.data) ? json.data : [];
       setTotal(json.total ?? list.length);
 
-      const mapped: MyGig[] = list.map((g) => ({
-        id: g.id,
-        title: g.title,
-        thumbnail: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=120&q=80", // placeholder
-        client: {
-          name: g.client.name,
-          avatar: g.client.avatarUrl ?? "https://i.pravatar.cc/150?img=1",
-        },
-        dueIn: getDueIn(g.deadline),
-        progress: getProgress(g.status),
-        status: apiStatusToMyGig(g.status),
-      }));
+      const mapped: MyGig[] = (await Promise.all(
+        list.map(async (g) => {
+          try {
+            const detailRes = await fetch(`/api/v1/projects/${g.id}`, {
+              credentials: "include",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (!detailRes.ok) throw new Error("Detail fetch failed");
+            const detailJson = await detailRes.json();
+            const detail: ApiGigDetail = detailJson.data;
+            console.log("Unwrapped detail:", detail);
+
+            return {
+              id: detail.id,
+              title: detail.title,
+              thumbnail: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=120&q=80",
+              client: {
+                name: g.clientName ?? "Unknown Client",
+                avatar: "https://i.pravatar.cc/150?img=1",
+              },
+              dueIn: detail.dueDate
+                ? getDueIn(detail.dueDate)
+                : g.collabDeadline
+                  ? getDueIn(g.collabDeadline)
+                  : "No deadline",
+              progress: getProgress(detail.status),
+              status: apiStatusToMyGig(detail.status),
+            };
+          } catch {
+            return {
+              id: g.id,
+              title: g.title,
+              thumbnail: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=120&q=80",
+              client: {
+                name: g.clientName ?? "Unknown Client",
+                avatar: "https://i.pravatar.cc/150?img=1",
+              },
+              dueIn: g.collabDeadline ? getDueIn(g.collabDeadline) : "No deadline",
+              progress: getProgress(g.status),
+              status: apiStatusToMyGig(g.status),
+            };
+          }
+        })
+      )).filter((gig): gig is MyGig => !!gig?.id && !!gig?.title);
 
       setGigs(mapped);
     } catch (err) {
@@ -135,7 +171,6 @@ const MyGigsContent: React.FC = () => {
     setPage(1);
   }, [activeChip, fetchGigs]);
 
-  // Client-side search filter
   const filtered = gigs.filter((gig) =>
     gig.title.toLowerCase().includes(search.toLowerCase())
   );
@@ -178,18 +213,16 @@ const MyGigsContent: React.FC = () => {
           <button
             key={chip}
             onClick={() => { setActiveChip(chip); setPage(1); }}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              activeChip === chip
-                ? "bg-[#E2554F] text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            }`}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeChip === chip
+              ? "bg-[#E2554F] text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
           >
             {chip}
           </button>
         ))}
       </div>
 
-      {/* States */}
       {loading && (
         <p className="text-sm text-gray-400 text-center py-12">Loading gigs…</p>
       )}
@@ -199,10 +232,8 @@ const MyGigsContent: React.FC = () => {
 
       {!loading && !error && (
         <>
-          {/* Stats */}
           <GigStatsBar gigs={gigs} />
 
-          {/* List */}
           <div className="mt-6">
             <h2 className="text-2xl font-bold text-black mb-4">All ({filtered.length})</h2>
             <div className="flex flex-col gap-3">
@@ -215,7 +246,6 @@ const MyGigsContent: React.FC = () => {
             )}
           </div>
 
-          {/* Pagination */}
           <GigsPagination
             currentPage={page}
             totalPages={totalPages}

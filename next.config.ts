@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.pravatar.cc" },
       { protocol: "https", hostname: "ui-avatars.com" },
       { protocol: "https", hostname: "jubalboard-storage-989615776310-eu-north-1-an.s3.eu-north-1.amazonaws.com", pathname: "/**" },
+      { protocol: "https", hostname: "placehold.co" },
     ],
   },
   async rewrites() {

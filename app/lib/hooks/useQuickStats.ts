@@ -17,7 +17,7 @@ export function useQuickStats() {
         const headers = { Authorization: `Bearer ${token}` };
 
         const [projectsRes, earningsRes] = await Promise.all([
-          fetch("/api/v1/projects/creative?filter=active", { headers, credentials: "include" }),
+          fetch("/api/v1/projects/creative?filter=Active", { headers, credentials: "include" }),
           fetch("/api/v1/earnings", { headers, credentials: "include" }),
         ]);
 

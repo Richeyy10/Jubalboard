@@ -13,7 +13,7 @@ import { useClientProjects } from "../../lib/hooks/useClientProjects";
 type FilterTab = "All Projects" | "Active Projects" | "Recent Projects" | "Completed Projects" | "Revised Projects";
 
 const tabStatusMap: Partial<Record<FilterTab, string>> = {
-  "Active Projects": "IN_PROGRESS",
+  "Active Projects": "PENDING_PAYMENT",
   "Completed Projects": "COMPLETED",
   "Revised Projects": "REVISION",
 };

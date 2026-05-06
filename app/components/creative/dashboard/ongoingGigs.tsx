@@ -6,9 +6,24 @@ import { useState, useEffect } from "react";
 interface OngoingGig {
   id: string;
   title: string;
+  status: string;
+  agreedAmount: number;
+  clientId: string;
+  clientName: string;
+  paymentMode: string;
+  requiredCollaborators: number;
+  collabDeadline: string | null;
+}
+
+interface MappedGig {
+  id: string;
+  title: string;
   thumbnail: string;
-  client: { name: string; avatar: string };
   dueIn: string;
+  client: {
+    name: string;
+    avatar: string;
+  };
   progress: number;
   status: string;
 }
@@ -30,56 +45,90 @@ const getProgress = (status: string): number => {
     REVISED: 90,
     COLLABORATING: 50,
     COMPLETED: 100,
+    PENDING_PAYMENT: 95,
   };
   return map[status] ?? 0;
 };
 
 export default function OngoingGigs() {
-  const [gigs, setGigs] = useState<OngoingGig[]>([]);
+  const [gigs, setGigs] = useState<MappedGig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchGigs = async () => {
-      try {
-        const tokenRes = await fetch("/api/auth/session/token");
-        const { token } = await tokenRes.json();
+  const fetchGigs = async () => {
+    try {
+      const tokenRes = await fetch("/api/auth/session/token");
+      const { token } = await tokenRes.json();
 
-        const res = await fetch("/api/v1/projects/creative?filter=active", {
-          credentials: "include",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const res = await fetch("/api/v1/projects/creative?filter=Active", {
+        credentials: "include",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-        const json = await res.json();
-        const list = Array.isArray(json.data) ? json.data : [];
+      const json = await res.json();
+      const list: OngoingGig[] = Array.isArray(json.data) ? json.data : [];
 
-        const mapped: OngoingGig[] = list
-          .slice(0, 2)
-          .map((g: any) => ({
-            id: g.id,
-            title: g.title,
-            thumbnail: "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=120&q=80",
-            client: {
-              name: g.client?.name ?? "Client",
-              avatar:
-                g.client?.avatarUrl ||
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(g.client?.name ?? "C")}&background=1a1a2e&color=fff&size=128`,
-            },
-            dueIn: g.deadline ? getDueIn(g.deadline) : "—",
-            progress: getProgress(g.status),
-            status: g.status ?? "—",
-          }));
+      const mapped: MappedGig[] = (
+        await Promise.all(
+          list.slice(0, 2).map(async (g) => {
+            try {
+              const detailRes = await fetch(`/api/v1/projects/${g.id}`, {
+                credentials: "include",
+                headers: { Authorization: `Bearer ${token}` },
+              });
 
-        setGigs(mapped);
-      } catch {
-        setError("Failed to load gigs.");
-      } finally {
-        setLoading(false);
-      }
-    };
+              if (!detailRes.ok) throw new Error("Detail fetch failed");
+              const detailJson = await detailRes.json();
+              const detail = detailJson.data;
 
-    fetchGigs();
-  }, []);
+              return {
+                id: detail.id,
+                title: detail.title,
+                thumbnail:
+                  "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=120&q=80",
+                client: {
+                  name: g.clientName,
+                  avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(g.clientName)}&background=1a1a2e&color=fff&size=128`,
+                },
+                dueIn: detail.dueDate
+                  ? getDueIn(detail.dueDate)
+                  : g.collabDeadline
+                    ? getDueIn(g.collabDeadline)
+                    : "—",
+                progress: getProgress(detail.status),
+                status: detail.status,
+              };
+            } catch {
+              // Fall back to list-level data if detail fetch fails
+              return {
+                id: g.id,
+                title: g.title,
+                thumbnail:
+                  "https://images.unsplash.com/photo-1626785774573-4b799315345d?w=120&q=80",
+                client: {
+                  name: g.clientName,
+                  avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(g.clientName)}&background=1a1a2e&color=fff&size=128`,
+                },
+                dueIn: g.collabDeadline ? getDueIn(g.collabDeadline) : "—",
+                progress: getProgress(g.status),
+                status: g.status,
+              };
+            }
+          })
+        )
+      ).filter((gig): gig is MappedGig => !!gig?.id && !!gig?.title);
+
+      setGigs(mapped);
+    } catch {
+      setError("Failed to load gigs.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchGigs();
+}, []);
 
   return (
     <section className="mb-8 bg-[#fafafa] p-4 lg:p-6">

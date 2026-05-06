@@ -1,4 +1,3 @@
-// lib/hooks/useClientProjects.ts
 import { useState, useEffect } from "react";
 import type { DeskProject } from "@/app/data/myDeskData";
 
@@ -29,52 +28,108 @@ export function useClientProjects(statusFilter?: string) {
         const list = json.data?.data ?? json.data ?? [];
         setTotal(json.data?.total ?? list.length);
 
-        const mapped: DeskProject[] = list.map((p: any) => {
-          const deadline = p.deadline ? new Date(p.deadline) : null;
-          const dueLabel = deadline
-            ? `Due ${deadline.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
-            : "No deadline";
+        const mapped: DeskProject[] = (
+          await Promise.all(
+            list.map(async (p: any) => {
+              let creative = null;
+              let deadline = p.deadline ? new Date(p.deadline) : null;
+              let thumbnail = "/placeholder.png";
 
-          // Map API status to DeskProject status
-          const statusMap: Record<string, DeskProject["status"]> = {
-            IN_PROGRESS: "In Progress",
-            COMPLETED: "Completed",
-            REVISION: "Revision",
-            ON_COLLAB: "On Collabs",
-            DELIVERABLE_SUBMITTED: "In Progress",
-            PARTIALLY_COMPLETED: "In Progress",
-            PENDING_PAYMENT: "In Progress",
-            ON_HOLD: "In Progress",
-            DISPUTED: "In Progress",
-          };
+              try {
+                const detailRes = await fetch(`/api/v1/projects/${p.id}`, {
+                  headers,
+                  credentials: "include",
+                });
 
-          const creativeAvatar =
-            p.creative?.avatarUrl ||
-            `https://ui-avatars.com/api/?name=${encodeURIComponent(p.creative?.name ?? "C")}&background=1a1a2e&color=fff&size=128`;
+                if (detailRes.ok) {
+                  const detailJson = await detailRes.json();
+                  const detail = detailJson.data;
+                  deadline = detail.dueDate ? new Date(detail.dueDate) : deadline;
 
-          return {
-            id: p.id,
-            title: p.title ?? p.brief?.jobTitle ?? "Untitled",
-            thumbnail: p.brief?.referenceFileUrls?.[0] ?? "https://placehold.co/100x100/f0f0f0/999?text=Project",
-            status: statusMap[p.status] ?? "In Progress",
-            progress: p.status === "COMPLETED" ? 100 : p.status === "REVISION" ? 60 : 40,
-            dueLabel,
-            chatLabel: "Chat Creative",
-            isCollab: false,
-            assignee: {
-              id: p.creative?.id ?? "",
-              name: p.creative?.name ?? "Creative",
-              avatar: creativeAvatar,
-              isOnline: false,
-            },
-            client: {
-              id: "",
-              name: "",
-              avatar: "",
-              isOnline: false,
-            },
-          } as DeskProject;
-        });
+                  // Parse thumbnail from brief's referenceFileUrl
+                  try {
+                    const urls = JSON.parse(detail.brief?.referenceFileUrl ?? "[]");
+                    if (Array.isArray(urls) && urls.length > 0) thumbnail = urls[0];
+                  } catch {
+                    // keep default
+                  }
+
+                  if (detail.pitchId && detail.briefId) {
+                    const pitchesRes = await fetch(`/api/v1/briefs/${detail.briefId}/pitches`, {
+                      headers,
+                      credentials: "include",
+                    });
+
+                    if (pitchesRes.ok) {
+                      const pitchesJson = await pitchesRes.json();
+                      const pitchesList = pitchesJson.data?.pitches ?? pitchesJson.data ?? [];
+                      const matchedPitch = pitchesList.find((pitch: any) => pitch.id === detail.pitchId);
+                      if (matchedPitch) {
+                        creative = matchedPitch.creativeProfile ?? null;
+                      }
+                    }
+                  }
+                }
+              } catch {
+                // fall back to defaults
+              }
+
+              const dueLabel = deadline
+                ? `Due ${deadline.toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}`
+                : "No deadline";
+
+              const statusMap: Record<string, DeskProject["status"]> = {
+                IN_PROGRESS: "In Progress",
+                COMPLETED: "Completed",
+                REVISION: "Revision",
+                ON_COLLAB: "On Collabs",
+                DELIVERABLE_SUBMITTED: "In Progress",
+                PARTIALLY_COMPLETED: "In Progress",
+                PENDING_PAYMENT: "In Progress",
+                ON_HOLD: "In Progress",
+                DISPUTED: "In Progress",
+              };
+
+              const creativeName =
+                creative?.fullName ??
+                creative?.name ??
+                "Creative";
+
+              const creativeAvatar =
+                creative?.avatarUrl ??
+                creative?.imageUrl ??
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(creativeName)}&background=1a1a2e&color=fff&size=128`;
+
+              return {
+                id: p.id,
+                title: p.title ?? p.brief?.jobTitle ?? "Untitled",
+                thumbnail,
+                status: statusMap[p.status] ?? "In Progress",
+                progress:
+                  p.status === "COMPLETED" ? 100 : p.status === "REVISION" ? 60 : 40,
+                dueLabel,
+                chatLabel: "Chat Creative",
+                isCollab: false,
+                assignee: {
+                  id: creative?.id ?? "",
+                  name: creativeName,
+                  avatar: creativeAvatar,
+                  isOnline: false,
+                },
+                client: {
+                  id: "",
+                  name: "",
+                  avatar: "",
+                  isOnline: false,
+                },
+              } as DeskProject;
+            })
+          )
+        ).filter((p): p is DeskProject => !!p?.id);
 
         setProjects(mapped);
       } catch (err) {
