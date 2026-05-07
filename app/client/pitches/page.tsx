@@ -78,69 +78,97 @@ const IncomingPitches: React.FC = () => {
   const [profile, setProfile] = useState<ClientProfile | null>(null);
 
   const fetchAllPitches = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  setLoading(true);
+  setError(null);
+  try {
+    const tokenRes = await fetch("/api/auth/session/token");
+    const { token } = await tokenRes.json();
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+
+    // 1. Fetch Suggested Creatives to build the Image Map (Match Hook Logic)
+    const imageMap: Record<string, string> = {};
     try {
-      const tokenRes = await fetch("/api/auth/session/token");
-      const { token } = await tokenRes.json();
-      const headers = {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      };
-
-      // Fetch client profile and briefs in parallel
-      const [profileRes, briefsRes] = await Promise.all([
-        fetch("/api/v1/clients/me", { headers, credentials: "include" }),
-        fetch("/api/v1/briefs/me", { headers, credentials: "include" }),
-      ]);
-
-      const profileJson = await profileRes.json();
-      setProfile(profileJson.data ?? profileJson);
-
-      const briefsJson = await briefsRes.json();
-      const briefList: Brief[] = Array.isArray(briefsJson)
-        ? briefsJson
-        : Array.isArray(briefsJson.data)
-          ? briefsJson.data
-          : briefsJson.data?.briefs ?? [];
-
-      if (briefList.length === 0) {
-        setPitches([]);
-        return;
+      const suggestedRes = await fetch("/api/v1/creatives/suggested", { headers, credentials: "include" });
+      if (suggestedRes.ok) {
+        const suggestedJson = await suggestedRes.json();
+        (Array.isArray(suggestedJson.data) ? suggestedJson.data : []).forEach((c: any) => {
+          if (c.name && c.imageUrl) imageMap[c.name] = c.imageUrl;
+        });
       }
+    } catch { /* fail silently */ }
 
-      // Fetch pitches for all briefs in parallel
-      const pitchResults = await Promise.all(
-        briefList.map(async (brief) => {
-          try {
-            const res = await fetch(`/api/v1/briefs/${brief.id}/pitches`, {
-              headers,
-              credentials: "include",
-            });
-            if (!res.ok) return [];
-            const json = await res.json();
-            const list = json.data?.pitches ?? json.data ?? json ?? [];
-            // Attach brief title to each pitch so we know which brief it came from
-            return (Array.isArray(list) ? list : []).map((p: any) => ({
+    // 2. Fetch profile and briefs
+    const [profileRes, briefsRes] = await Promise.all([
+      fetch("/api/v1/clients/me", { headers, credentials: "include" }),
+      fetch("/api/v1/briefs/me", { headers, credentials: "include" }),
+    ]);
+
+    const profileJson = await profileRes.json();
+    setProfile(profileJson.data ?? profileJson);
+
+    const briefsJson = await briefsRes.json();
+    const briefList: Brief[] = Array.isArray(briefsJson)
+      ? briefsJson
+      : Array.isArray(briefsJson.data)
+        ? briefsJson.data
+        : briefsJson.data?.briefs ?? [];
+
+    if (briefList.length === 0) {
+      setPitches([]);
+      return;
+    }
+
+    // 3. Fetch pitches and apply the Image Map logic
+    const pitchResults = await Promise.all(
+      briefList.map(async (brief) => {
+        try {
+          const res = await fetch(`/api/v1/briefs/${brief.id}/pitches`, {
+            headers,
+            credentials: "include",
+          });
+          if (!res.ok) return [];
+          const json = await res.json();
+          const list = json.data?.pitches ?? json.data ?? json ?? [];
+          
+          return (Array.isArray(list) ? list : []).map((p: any) => {
+            const cp = p.creativeProfile;
+            const name = cp?.fullName ?? cp?.name ?? "Creative";
+            
+            // Apply Hook Avatar Logic
+            const finalAvatar = 
+              imageMap[name] ?? 
+              cp?.avatarUrl ?? 
+              cp?.imageUrl ?? 
+              `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1a1a2e&color=fff&size=128`;
+
+            return {
               ...p,
               briefTitle: brief.jobTitle,
-            }));
-          } catch {
-            return [];
-          }
-        })
-      );
+              creativeProfile: {
+                ...cp,
+                avatarUrl: finalAvatar // Inject the mapped avatar here
+              }
+            };
+          });
+        } catch {
+          return [];
+        }
+      })
+    );
 
-      const allPitches: Pitch[] = pitchResults.flat();
-      // Sort by newest first
-      allPitches.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      setPitches(allPitches);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const allPitches: Pitch[] = pitchResults.flat();
+    allPitches.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    setPitches(allPitches);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Something went wrong.");
+  } finally {
+    setLoading(false);
+  }
+}, []);
+
 
   useEffect(() => {
     fetchAllPitches();

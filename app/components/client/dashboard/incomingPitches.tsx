@@ -83,6 +83,23 @@ const IncomingPitches: React.FC = () => {
         const { token } = await tokenRes.json();
         const headers = { Authorization: `Bearer ${token}` };
 
+        // 1. BUILD IMAGE MAP FROM SUGGESTED CREATIVES (Match Hook Logic)
+        const imageMap: Record<string, string> = {};
+        try {
+          const suggestedRes = await fetch("/api/v1/creatives/suggested", { 
+            headers, 
+            credentials: "include" 
+          });
+          if (suggestedRes.ok) {
+            const suggestedJson = await suggestedRes.json();
+            (Array.isArray(suggestedJson.data) ? suggestedJson.data : []).forEach((c: any) => {
+              if (c.name && c.imageUrl) imageMap[c.name] = c.imageUrl;
+            });
+          }
+        } catch {
+          // fail silently
+        }
+
         // Step 1: get all briefs
         const briefsRes = await fetch("/api/v1/briefs/me", {
           headers,
@@ -95,6 +112,7 @@ const IncomingPitches: React.FC = () => {
 
         if (briefList.length === 0) {
           setPitches([]);
+          setLoading(false);
           return;
         }
 
@@ -118,7 +136,7 @@ const IncomingPitches: React.FC = () => {
 
         const allPitches = pitchResults.flat();
 
-        // Step 3: filter to PENDING only and take first 3
+        // Step 3: filter to PENDING only and take first 4
         const pending = allPitches
           .filter((p: any) => p.status === "PENDING")
           .slice(0, 4);
@@ -126,9 +144,12 @@ const IncomingPitches: React.FC = () => {
         const mapped: Pitch[] = pending.map((p: any) => {
           const cp = p.creativeProfile;
           const name = cp?.fullName ?? cp?.name ?? "Creative";
+
+          // 2. APPLY AVATAR FALLBACK HIERARCHY (Match Hook Logic)
           const avatar =
-            cp?.avatarUrl ??
-            cp?.imageUrl ??
+            imageMap[name] ??           // 1. Check suggested map
+            cp?.avatarUrl ??            // 2. Check profile avatarUrl
+            cp?.imageUrl ??             // 3. Check profile imageUrl
             `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=1a1a2e&color=fff&size=128`;
 
           return {

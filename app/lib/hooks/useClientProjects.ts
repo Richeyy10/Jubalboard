@@ -16,6 +16,20 @@ export function useClientProjects(statusFilter?: string) {
         const { token } = await tokenRes.json();
         const headers = { Authorization: `Bearer ${token}` };
 
+        // Build image map from suggested creatives
+        const imageMap: Record<string, string> = {};
+        try {
+          const suggestedRes = await fetch("/api/v1/creatives/suggested", { headers, credentials: "include" });
+          if (suggestedRes.ok) {
+            const suggestedJson = await suggestedRes.json();
+            (Array.isArray(suggestedJson.data) ? suggestedJson.data : []).forEach((c: any) => {
+              if (c.name && c.imageUrl) imageMap[c.name] = c.imageUrl;
+            });
+          }
+        } catch {
+          // fail silently, avatars will fall back to ui-avatars
+        }
+
         const params = new URLSearchParams();
         if (statusFilter) params.set("status", statusFilter);
 
@@ -100,6 +114,7 @@ export function useClientProjects(statusFilter?: string) {
                 "Creative";
 
               const creativeAvatar =
+                imageMap[creativeName] ??
                 creative?.avatarUrl ??
                 creative?.imageUrl ??
                 `https://ui-avatars.com/api/?name=${encodeURIComponent(creativeName)}&background=1a1a2e&color=fff&size=128`;

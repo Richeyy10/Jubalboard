@@ -36,10 +36,17 @@ interface SuggestedCreative {
   id: string;
   name: string;
   professionalRole: string;
-  imageUrl: string;
+  photo: string | null;
+  imageUrl: string | null;
   overallRating: number;
   isPremium: boolean;
   isVerified: boolean;
+}
+
+interface CategoryCreatives {
+  recommended: SuggestedCreative[];
+  topRated: SuggestedCreative[];
+  verified: SuggestedCreative[];
 }
 
 const filterChips = ["All", "Recent", "$100-$200", "Graphic Designers", "Logo Design", "Posters", "Brand Identity", "Packaging"];
@@ -111,7 +118,11 @@ const CategoryGigsPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<ClientProfile | null>(null);
   const [services, setServices] = useState<Service[]>([]);
-  const [suggestedCreatives, setSuggestedCreatives] = useState<SuggestedCreative[]>([]);
+  const [categoryCreatives, setCategoryCreatives] = useState<CategoryCreatives>({
+    recommended: [],
+    topRated: [],
+    verified: [],
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -122,7 +133,6 @@ const CategoryGigsPage: React.FC = () => {
         const { token } = await tokenRes.json();
         const headers = { Authorization: `Bearer ${token}` };
 
-        // Fetch profile, all categories, and suggested creatives in parallel
         const [profileRes, categoriesRes, suggestedRes] = await Promise.all([
           fetch("/api/v1/clients/me", { headers, credentials: "include" }),
           fetch("/api/v1/categories", { headers, credentials: "include" }),
@@ -135,13 +145,16 @@ const CategoryGigsPage: React.FC = () => {
           setProfile(profileJson.data);
         }
 
-        // Suggested creatives
+        // Build imageUrl lookup map from suggested endpoint
+        const imageMap: Record<string, string> = {};
         if (suggestedRes.ok) {
           const suggestedJson = await suggestedRes.json();
-          setSuggestedCreatives(Array.isArray(suggestedJson.data) ? suggestedJson.data : []);
+          (Array.isArray(suggestedJson.data) ? suggestedJson.data : []).forEach((c: any) => {
+            if (c.id && c.imageUrl) imageMap[c.id] = c.imageUrl;
+          });
         }
 
-        // Find matching category by name, then fetch its full detail
+        // Categories
         if (categoriesRes.ok) {
           const categoriesJson = await categoriesRes.json();
           const allCategories = Array.isArray(categoriesJson.data)
@@ -153,15 +166,36 @@ const CategoryGigsPage: React.FC = () => {
           );
 
           if (matched) {
-            const detailRes = await fetch(`/api/v1/categories/${matched.id}`, {
-              headers,
-              credentials: "include",
-            });
+            const [detailRes, recommendedRes, topRatedRes, verifiedRes] = await Promise.all([
+              fetch(`/api/v1/categories/${matched.id}`, { headers, credentials: "include" }),
+              fetch(`/api/v1/creatives?categoryId=${matched.id}&recommended=true&sort=recommended`, { headers, credentials: "include" }),
+              fetch(`/api/v1/creatives?categoryId=${matched.id}&sort=rating`, { headers, credentials: "include" }),
+              fetch(`/api/v1/creatives?categoryId=${matched.id}&verified=true`, { headers, credentials: "include" }),
+            ]);
+
             if (detailRes.ok) {
-              const detailJson = await detailRes.json();
-              const detail = detailJson.data ?? detailJson;
-              setServices(Array.isArray(detail.services) ? detail.services : []);
-            }
+  const detailJson = await detailRes.json();
+  const detail = detailJson.data ?? detailJson;
+  console.log("Category detail:", JSON.stringify(detail, null, 2)); // 👈
+  setServices(Array.isArray(detail.services) ? detail.services : []);
+}
+
+            const parseCreatives = async (res: Response): Promise<SuggestedCreative[]> => {
+              if (!res.ok) return [];
+              const json = await res.json();
+              return (Array.isArray(json.data) ? json.data : []).map((c: any) => ({
+                ...c,
+                imageUrl: imageMap[c.id] ?? c.photo ?? null,
+              }));
+            };
+
+            const [recommended, topRated, verified] = await Promise.all([
+              parseCreatives(recommendedRes),
+              parseCreatives(topRatedRes),
+              parseCreatives(verifiedRes),
+            ]);
+
+            setCategoryCreatives({ recommended, topRated, verified });
           }
         }
       } catch {
@@ -180,10 +214,18 @@ const CategoryGigsPage: React.FC = () => {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1a1a2e&color=fff&size=128`;
 
   const creativeGroups = [
-    { label: "Suggested", creatives: suggestedCreatives },
-    { label: "Top Rated", creatives: [...suggestedCreatives].sort((a, b) => b.overallRating - a.overallRating) },
-    { label: "Verified", creatives: suggestedCreatives.filter((c) => c.isVerified) },
+    { label: "Suggested", creatives: categoryCreatives.recommended },
+    { label: "Top Rated", creatives: categoryCreatives.topRated },
+    { label: "Verified", creatives: categoryCreatives.verified },
   ];
+
+  const filterCreatives = (creatives: SuggestedCreative[]) =>
+    creatives.filter(
+      (c) =>
+        search === "" ||
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.professionalRole.toLowerCase().includes(search.toLowerCase())
+    );
 
   if (loading) {
     return (
@@ -205,7 +247,11 @@ const CategoryGigsPage: React.FC = () => {
         {sidebarOpen && (
           <div className="fixed inset-0 bg-black/40 z-30 lg:hidden" onClick={() => setSidebarOpen(false)} />
         )}
-        <div className={`fixed top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:z-10`}>
+        <div
+          className={`fixed top-0 left-0 h-full z-40 transition-transform duration-300 ease-in-out ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } lg:translate-x-0 lg:sticky lg:top-0 lg:h-screen lg:z-10`}
+        >
           <button className="absolute top-4 right-4 z-50 lg:hidden" onClick={() => setSidebarOpen(false)}>
             <X size={22} />
           </button>
@@ -213,11 +259,13 @@ const CategoryGigsPage: React.FC = () => {
         </div>
 
         <main className="flex-1 w-full px-4 lg:px-7 py-6 overflow-y-auto">
-          <Breadcrumb crumbs={[
-            { label: "Dashboard", path: "/client/dashboard" },
-            { label: "Hire A Pro", path: "/client/explore-skills" },
-            { label: categoryName },
-          ]} />
+          <Breadcrumb
+            crumbs={[
+              { label: "Dashboard", path: "/client/dashboard" },
+              { label: "Hire A Pro", path: "/client/explore-skills" },
+              { label: categoryName },
+            ]}
+          />
 
           <h1 className="text-2xl font-bold text-gray-900 mb-5">Hire A Pro</h1>
 
@@ -246,7 +294,11 @@ const CategoryGigsPage: React.FC = () => {
               <button
                 key={chip}
                 onClick={() => setActiveChip(chip)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeChip === chip ? "bg-red-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                  activeChip === chip
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
               >
                 {chip}
               </button>
@@ -263,7 +315,10 @@ const CategoryGigsPage: React.FC = () => {
             ) : (
               <div className="flex gap-3.5 overflow-x-auto pb-1 scroll-smooth">
                 {services.map((service) => (
-                  <div key={service.id} className="relative rounded-lg overflow-hidden h-[300px] flex-shrink-0 cursor-pointer group">
+                  <div
+                    key={service.id}
+                    className="relative rounded-lg overflow-hidden h-[300px] flex-shrink-0 cursor-pointer group"
+                  >
                     <Image
                       src={service.imageUrl || "/placeholder.png"}
                       alt={service.name}
@@ -285,31 +340,25 @@ const CategoryGigsPage: React.FC = () => {
           {creativeGroups.map((group) => (
             <div key={group.label} className="bg-[#fafafa] p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">{group.label}</h2>
-              {group.creatives.length === 0 ? (
+              {filterCreatives(group.creatives).length === 0 ? (
                 <p className="text-sm text-gray-400">No creatives found.</p>
               ) : (
                 <div className="flex gap-4 overflow-x-auto pb-2 scroll-smooth">
-                  {group.creatives
-                    .filter((c) =>
-                      search === "" ||
-                      c.name.toLowerCase().includes(search.toLowerCase()) ||
-                      c.professionalRole.toLowerCase().includes(search.toLowerCase())
-                    )
-                    .map((c) => (
-                      <CreativeCard
-                        key={c.id}
-                        id={c.id}
-                        name={c.name}
-                        role={c.professionalRole}
-                        rating={c.overallRating}
-                        avatar={
-                          c.imageUrl ||
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=1a1a2e&color=fff&size=128`
-                        }
-                        verified={c.isVerified}
-                        premium={c.isPremium}
-                      />
-                    ))}
+                  {filterCreatives(group.creatives).map((c) => (
+                    <CreativeCard
+                      key={c.id}
+                      id={c.id}
+                      name={c.name}
+                      role={c.professionalRole}
+                      rating={c.overallRating}
+                      avatar={
+                        c.imageUrl ??
+                        `https://ui-avatars.com/api/?name=${encodeURIComponent(c.name)}&background=1a1a2e&color=fff&size=128`
+                      }
+                      verified={c.isVerified}
+                      premium={c.isPremium}
+                    />
+                  ))}
                 </div>
               )}
             </div>

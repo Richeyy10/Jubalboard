@@ -84,6 +84,23 @@ const ActiveProjects: React.FC = () => {
         const { token } = await tokenRes.json();
         const headers = { Authorization: `Bearer ${token}` };
 
+        // 1. BUILD IMAGE MAP FROM SUGGESTED CREATIVES (Match Hook Logic)
+        const imageMap: Record<string, string> = {};
+        try {
+          const suggestedRes = await fetch("/api/v1/creatives/suggested", { 
+            headers, 
+            credentials: "include" 
+          });
+          if (suggestedRes.ok) {
+            const suggestedJson = await suggestedRes.json();
+            (Array.isArray(suggestedJson.data) ? suggestedJson.data : []).forEach((c: any) => {
+              if (c.name && c.imageUrl) imageMap[c.name] = c.imageUrl;
+            });
+          }
+        } catch {
+          // Fail silently
+        }
+
         const res = await fetch("/api/v1/projects?status=PENDING_PAYMENT", {
           headers,
           credentials: "include",
@@ -95,8 +112,7 @@ const ActiveProjects: React.FC = () => {
         const mapped: Project[] = (
           await Promise.all(
             list.slice(0, 4).map(async (p: any) => {
-              let assignee = "Creative";
-              let assigneeAvatar = `https://ui-avatars.com/api/?name=Creative&background=1a1a2e&color=fff&size=128`;
+              let creative = null;
               let thumbnail = "/placeholder.png";
 
               try {
@@ -109,15 +125,11 @@ const ActiveProjects: React.FC = () => {
                   const detailJson = await detailRes.json();
                   const detail = detailJson.data;
 
-                  // Parse thumbnail
                   try {
                     const urls = JSON.parse(detail.brief?.referenceFileUrl ?? "[]");
                     if (Array.isArray(urls) && urls.length > 0) thumbnail = urls[0];
-                  } catch {
-                    // keep default
-                  }
+                  } catch { /* keep default */ }
 
-                  // Fetch creative via brief pitches
                   if (detail.pitchId && detail.briefId) {
                     const pitchesRes = await fetch(`/api/v1/briefs/${detail.briefId}/pitches`, {
                       headers,
@@ -128,26 +140,28 @@ const ActiveProjects: React.FC = () => {
                       const pitchesJson = await pitchesRes.json();
                       const pitchesList = pitchesJson.data?.pitches ?? pitchesJson.data ?? [];
                       const matchedPitch = pitchesList.find((pitch: any) => pitch.id === detail.pitchId);
-                      if (matchedPitch?.creativeProfile) {
-                        const cp = matchedPitch.creativeProfile;
-                        assignee = cp.fullName ?? cp.name ?? "Creative";
-                        assigneeAvatar =
-                          cp.avatarUrl ??
-                          cp.imageUrl ??
-                          `https://ui-avatars.com/api/?name=${encodeURIComponent(assignee)}&background=1a1a2e&color=fff&size=128`;
+                      if (matchedPitch) {
+                        creative = matchedPitch.creativeProfile ?? null;
                       }
                     }
                   }
                 }
-              } catch {
-                // fall back to defaults
-              }
+              } catch { /* fall back */ }
+
+              // 2. APPLY AVATAR FALLBACK HIERARCHY (Match Hook Logic)
+              const assigneeName = creative?.fullName ?? creative?.name ?? "Creative";
+              
+              const assigneeAvatar =
+                imageMap[assigneeName] ??         // Check suggested map first
+                creative?.avatarUrl ??            // Then creative profile props
+                creative?.imageUrl ?? 
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(assigneeName)}&background=1a1a2e&color=fff&size=128`;
 
               return {
                 id: p.id,
                 title: p.title ?? p.brief?.jobTitle ?? "Untitled",
-                assignee,
-                assigneeAvatar,
+                assignee: assigneeName,
+                assigneeAvatar: assigneeAvatar,
                 thumbnail,
                 status: p.status ?? "In Progress",
                 progress: getProgress(p.status),
