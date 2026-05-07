@@ -25,8 +25,8 @@ const GigListItem: React.FC<Props> = ({ gig }) => {
 
   const handleUploadDeliverables = () => {
     setActiveProjectTitle(gig.title);
-    router.push(`/creative/my-gigs/${encodeURIComponent(gig.title)}/upload-deliverables`);
-  };
+    router.push(`/creative/my-gigs/${encodeURIComponent(gig.title)}/upload-deliverables?id=${gig.id}`);
+};
 
   return (
     <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-4 bg-[#fafafa] border border-gray-100 rounded-xl px-4 py-4 hover:shadow-sm transition-shadow">
